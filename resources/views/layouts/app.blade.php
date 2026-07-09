@@ -256,7 +256,7 @@
             </div>
 
             <ul class="katagori">
-                <li class="active"><a href="#"><i class="fa-solid fa-house"></i> Anasayfa</a></li>
+                <li class="active"><a href="http://127.0.0.1:8000/dashboard"><i class="fa-solid fa-house"></i> Anasayfa</a></li>
                 <li><a href="/domains"><i class="fa-solid fa-globe"></i> Domainler</a></li>
                 <li><a href="#"><i class="fa-solid fa-database"></i> DNS Kayıtları</a></li>
                 <li><a href="#"><i class="fa-solid fa-file-lines"></i> Loglar</a></li>
@@ -270,106 +270,7 @@
         </div>
     </div>
 
-    <div class="ana-icerik">
-        
-        <div class="sayfa-baslik">
-            <h1>Anasayfa</h1>
-            <p>Sistem özeti ve istatistikler</p>
-        </div>
-
-        <div class="kartlar-kapsayici">
-            <div class="kart">
-                <div class="kart-bilgi">
-                    <h3>Toplam Domain</h3>
-                    <div class="sayi">{{ $domainCount }}</div>
-                    <div class="alt-yazi">Aktif domain sayısı</div>
-                </div>
-                <div class="kart-ikon"><i class="fa-solid fa-globe"></i></div>
-            </div>
-
-            <div class="kart">
-                <div class="kart-bilgi">
-                    <h3>Toplam DNS Kaydı</h3>
-                    <div class="sayi">28</div>
-                    <div class="alt-yazi">Tüm kayıtların toplamı</div>
-                </div>
-                <div class="kart-ikon"><i class="fa-solid fa-database"></i></div>
-            </div>
-
-            <div class="kart">
-                <div class="kart-bilgi">
-                    <h3>Toplam Kullanıcı</h3>
-                    <div class="sayi">3</div>
-                    <div class="alt-yazi">Sistemdeki kullanıcı sayısı</div>
-                </div>
-                <div class="kart-ikon"><i class="fa-solid fa-users"></i></div>
-            </div>
-
-            <div class="kart">
-                <div class="kart-bilgi">
-                    <h3>Son 24 Saat İşlem</h3>
-                    <div class="sayi">12</div>
-                    <div class="alt-yazi">Son 24 saatteki işlem sayısı</div>
-                </div>
-                <div class="kart-ikon"><i class="fa-solid fa-chart-line"></i></div>
-            </div>
-        </div>
-
-        <div class="alt-bloklar">
-            <div class="blok">
-                <h2>Son Eklenen Domainler</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Domain</th>
-                            <th>Kayıt Sayısı</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><a href="#">example.com</a></td>
-                            <td>8</td>
-                        </tr>
-                        <tr>
-                            <td><a href="#">deneme.com</a></td>
-                            <td>5</td>
-                        </tr>
-                        <tr>
-                            <td><a href="#">test.net</a></td>
-                            <td>6</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="blok">
-                <h2>Son İşlemler</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>İşlem</th>
-                            <th>Tarih</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>DNS kaydı eklendi</td>
-                            <td>07.07.2025 14:32</td>
-                        </tr>
-                        <tr>
-                            <td>DNS kaydı güncellendi</td>
-                            <td>07.07.2025 13:20</td>
-                        </tr>
-                        <tr>
-                            <td>Domain eklendi</td>
-                            <td>07.07.2025 11:45</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-    </div>
+    <div class="ana-icerik"> @yield('content')</div>
 
 </body>
 </html>
