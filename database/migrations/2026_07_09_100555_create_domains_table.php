@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('domain_name');
             $table->text('description')->nullable();
             $table->timestamps();
+            
         });
     }
 

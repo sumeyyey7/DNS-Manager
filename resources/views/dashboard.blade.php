@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>DNS Management System - Dashboard</title>
+    <title>DNS Management System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         
@@ -256,9 +256,9 @@
             </div>
 
             <ul class="katagori">
-                <li class="active"><a href="#"><i class="fa-solid fa-house"></i> Anasayfa</a></li>
+                <li class="active"><a href="/dashboard"><i class="fa-solid fa-house"></i> Anasayfa</a></li>
                 <li><a href="/domains"><i class="fa-solid fa-globe"></i> Domainler</a></li>
-                <li><a href="#"><i class="fa-solid fa-database"></i> DNS Kayıtları</a></li>
+                <li><a href="/dns-records"><i class="fa-solid fa-database"></i> DNS Kayıtları</a></li>
                 <li><a href="#"><i class="fa-solid fa-file-lines"></i> Loglar</a></li>
                 <li><a href="#"><i class="fa-solid fa-users"></i> Kullanıcılar</a></li>
                 <li><a href="#"><i class="fa-solid fa-gear"></i> Ayarlar</a></li>

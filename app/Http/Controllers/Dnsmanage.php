@@ -17,6 +17,7 @@ class Dnsmanage extends Controller
     if (
     $request->email == "syesilyurt589@gmail.com" && $request->password == "123456") 
     {
+    $request->session()->put('login', true);
     return redirect('/dashboard');
     }  
 

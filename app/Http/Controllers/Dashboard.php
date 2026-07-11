@@ -1,16 +1,19 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Models\Domain;
-
-
 
 class Dashboard extends Controller
 {
     public function dashboard()
-{
-    $domainCount = Domain::count();
+    {
+        if (!session('login')) {
+            return redirect('/login');
+        }
 
-    return view('dashboard', compact('domainCount'));
-}
+        $domainCount = Domain::count();
+
+        return view('dashboard', compact('domainCount'));
+    }
 }
