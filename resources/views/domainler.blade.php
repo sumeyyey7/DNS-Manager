@@ -107,9 +107,11 @@
 .islem-butonlari i:hover{
     background:#f1f5f9;
 }
+.islem-butonlari .fa-pen-to-square:hover { color: #2563eb; background-color: #eff6ff; }
+.islem-butonlari .fa-trash-can:hover { color: #dc2626; background-color: #fef2f2; }
 
-/* Modal */
-.modal{
+/* Modal Ortak Altyapı */
+.modal, .sil-modal-arka-plan {
     display:none;
     position:fixed;
     top:0;
@@ -117,6 +119,7 @@
     width:100%;
     height:100%;
     background:rgba(15,23,42,.45);
+    backdrop-filter: blur(4px);
     z-index:1000;
 }
 
@@ -128,6 +131,45 @@
     padding:30px;
     border-radius:12px;
     box-shadow:0 15px 40px rgba(0,0,0,.18);
+    animation: modalAcilis 0.25s ease-out;
+}
+
+/* ŞIK SİLME MODALI ÖZEL CSS */
+.sil-modal-kutu {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    width: 100%;
+    max-width: 400px;
+    margin: 150px auto;
+    text-align: center;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    animation: modalAcilis 0.2s ease-out;
+}
+
+@keyframes modalAcilis {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.sil-modal-ikon {
+    font-size: 48px;
+    color: #dc2626;
+    margin-bottom: 15px;
+}
+
+.sil-modal-kutu h2 {
+    font-size: 20px;
+    color: #0f172a;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+
+.sil-modal-kutu p {
+    font-size: 14px;
+    color: #64748b;
+    margin-bottom: 25px;
 }
 
 .modal-icerik h2{
@@ -168,43 +210,15 @@
 }
 
 /* Butonlar */
-.modal-footer{
+.modal-footer, .sil-modal-butonlar{
     display:flex;
     justify-content:flex-end;
     gap:10px;
     margin-top:10px;
 }
+.sil-modal-butonlar { justify-content: center; }
 
 .btn-kaydet{
-    background:#2563eb;
-    color:#fff;
-    border:none;
-    padding:10px 20px;
-    border-radius:8px;
-    cursor:pointer;
-    font-size:14px;
-    font-weight:500;
-}
-
-.btn-kaydet:hover{
-    background:#1d4ed8;
-}
-
-.btn-iptal{
-    background:#e2e8f0;
-    color:#334155;
-    border:none;
-    padding:10px 20px;
-    border-radius:8px;
-    cursor:pointer;
-    font-size:14px;
-    font-weight:500;
-}
-
-.btn-iptal:hover{
-    background:#cbd5e1;
-}
-    .btn-kaydet{
     display:flex;
     align-items:center;
     gap:8px;
@@ -224,7 +238,7 @@
     transform:translateY(-1px);
 }
 
-.btn-iptal{
+.btn-iptal, .btn-sil-vazgec{
     display:flex;
     align-items:center;
     gap:8px;
@@ -239,10 +253,23 @@
     transition:.2s;
 }
 
-.btn-iptal:hover{
+.btn-iptal:hover, .btn-sil-vazgec:hover{
     background:#e2e8f0;
     transform:translateY(-1px);
 }
+
+.btn-sil-onay {
+    background-color: #dc2626;
+    color: #ffffff;
+    border: none;
+    padding: 11px 22px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 14px;
+    transition: .2s;
+}
+.btn-sil-onay:hover { background-color: #b91c1c; transform:translateY(-1px); }
 </style>
 
 <div class="sayfa-ust">
@@ -273,134 +300,119 @@
         <tbody>
             @foreach($domains as $domain)
             <tr>
-                <td><a href="#" class="domain-link">{{ $domain->domain_name }}</a></td>
-                <td></td> 
-                <td></td> 
+                <td><a href="/domains/{{ $domain->id }}/dns-records" class="domain-link">{{ $domain->domain_name }}</a></td>
+                <td style="font-weight: 600; padding-left: 15px;">{{ $domain->dns_records_count ?? 0 }}</td> 
+                <td><span class="badge-aktif">Aktif</span></td> 
                 <td>{{ $domain->created_at ? $domain->created_at->format('d.m.Y H:i') : '' }}</td>
                 <td>{{ $domain->description }}</td>
                 <td>
                     <div class="islem-butonlari" style="justify-content: flex-end; padding-right:15px;">
+                       
+                       <i class="fa-regular fa-pen-to-square" title="Düzenle" onclick="duzenle({{ $domain->id }})"></i>
 
-                       <i class="fa-regular fa-pen-to-square"
-                       title="Düzenle"
-                       onclick="duzenle({{ $domain->id }})">
-                      </i>
+                       <i class="fa-regular fa-trash-can" title="Sil" onclick="silmeOnayiniAc({{ $domain->id }})"></i>
 
-
-                        <i class="fa-regular fa-trash-can"
-                        title="Sil"
-                        onclick="domainSil({{ $domain->id }})"></i>
-
-                    <form id="sil-formu-{{ $domain->id }}"
-                        action="/domains/{{ $domain->id }}"
-                        method="POST"
-                        style="display:none;">
-
-                        @csrf
-                        @method('DELETE')
-
-    </form>
-
-</div>
+                       <form id="sil-formu-{{ $domain->id }}" action="/domains/{{ $domain->id }}" method="POST" style="display:none;">
+                            @csrf
+                            @method('DELETE')
+                       </form>
+                    </div>
                 </td>
             </tr>
             @endforeach
         </tbody>
     </table>
-    <div id="modal" class="modal">
+</div>
 
+<div id="modal" class="modal">
     <div class="modal-icerik">
-
         <h2 id="modalTitle">Yeni Domain Ekle</h2>
+        <form id="domainForm" action="/domains" method="POST">
+            @csrf
+            <div id="methodAlani"></div>
 
-<form id="domainForm" action="/domains" method="POST">
+            <label>Domain Adı</label>
+            <input id="domain_name" type="text" name="domain_name">
 
-    @csrf
-
-    <label>Domain Adı</label>
-
-    <input id="domain_name" type="text" name="domain_name">
-
-    <label>Açıklama</label>
-
-    <textarea id="description" name="description"></textarea>
-
-            <br><br>
-
+            <label>Açıklama</label>
+            <textarea id="description" name="description"></textarea>
             
             <div class="modal-footer">
-
-    <button type="button" class="btn-iptal" onclick="modalKapat()"></i> İptal
-    </button>
-
-    <button type="submit" class="btn-kaydet"> Kaydet</button>
-
-</div>
-
+                <button type="button" class="btn-iptal" onclick="modalKapat()">İptal</button>
+                <button type="submit" class="btn-kaydet">Kaydet</button>
+            </div>
         </form>
-
     </div>
+</div>
 
+<div id="silmeOnayModal" class="sil-modal-arka-plan">
+    <div class="sil-modal-kutu">
+        <div class="sil-modal-ikon"><i class="fa-solid fa-circle-exclamation"></i></div>
+        <h2>Emin misiniz?</h2>
+        <p>Bu domaini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.</p>
+        <div class="sil-modal-butonlar">
+            <button class="btn-sil-vazgec" onclick="silmeOnayiniKapat()">Vazgeç</button>
+            <button class="btn-sil-onay" id="kesinSilButonu">Evet, Sil</button>
+        </div>
+    </div>
 </div>
-    
-</div>
+
 <script>
-    function domainSil(id) {
-        if (confirm('Bu domaini silmek istediğinize emin misiniz?')) {
-            document.getElementById('sil-formu-' + id).submit();
-        }
+    let silinecekDomainId = null;
+
+    // --- SİLME MODAL FONKSİYONLARI ---
+    function silmeOnayiniAc(id) {
+        silinecekDomainId = id;
+        document.getElementById('silmeOnayModal').style.display = 'block';
     }
-    function modalAc(){
-    document.getElementById("modal").style.display="block";
-}
 
-function modalKapat(){
-    document.getElementById("modal").style.display="none";
+    function silmeOnayiniKapat() {
+        document.getElementById('silmeOnayModal').style.display = 'none';
+    }
 
-
-}
-
-    function duzenle(id){
-
-    fetch('/domains/' + id + '/edit')
-
-    .then(response => response.json())
-
-    .then(domain => {
-
-        modalAc();
-
-        document.getElementById("modalTitle").innerHTML = "Domain Düzenle";
-
-        document.getElementById("domain_name").value = domain.domain_name;
-
-        document.getElementById("description").value = domain.description;
-
-        document.querySelector(".btn-kaydet").innerHTML = "Güncelle";
-
-        let form = document.getElementById("domainForm");
-
-        form.action = "/domains/" + id;
-
-        if(document.getElementById("putMethod") == null){
-
-            let input = document.createElement("input");
-
-            input.type = "hidden";
-
-            input.name = "_method";
-
-            input.value = "PUT";
-
-            input.id = "putMethod";
-
-            form.appendChild(input);
-
+    document.getElementById('kesinSilButonu').addEventListener('click', function() {
+        if (silinecekDomainId) {
+            document.getElementById('sil-formu-' + silinecekDomainId).submit();
         }
-
     });
 
-}
+    // --- EKLEME/DÜZENLEME MODAL FONKSİYONLARI ---
+    function modalAc(){
+        document.getElementById("modalTitle").innerHTML = "Yeni Domain Ekle";
+        document.getElementById("domainForm").action = "/domains";
+        document.getElementById("methodAlani").innerHTML = "";
+        document.getElementById("domainForm").reset();
+        document.querySelector(".btn-kaydet").innerHTML = "Kaydet";
+        document.getElementById("modal").style.display="block";
+    }
+
+    function modalKapat(){
+        document.getElementById("modal").style.display="none";
+    }
+
+    function duzenle(id){
+        fetch('/domains/' + id + '/edit')
+        .then(response => response.json())
+        .then(domain => {
+            document.getElementById("modal").style.display="block";
+            document.getElementById("modalTitle").innerHTML = "Domain Düzenle";
+            document.getElementById("domain_name").value = domain.domain_name;
+            document.getElementById("description").value = domain.description;
+            document.querySelector(".btn-kaydet").innerHTML = "Güncelle";
+
+            let form = document.getElementById("domainForm");
+            form.action = "/domains/" + id;
+            document.getElementById("methodAlani").innerHTML = '<input type="hidden" name="_method" value="PUT" id="putMethod">';
+        });
+    }
+
+    // Boşluğa tıklayınca modalları kapatma güvenliği
+    window.onclick = function(event) {
+        var modal = document.getElementById('modal');
+        var silModal = document.getElementById('silmeOnayModal');
+        if (event.target == modal) modalKapat();
+        if (event.target == silModal) silmeOnayiniKapat();
+    }
 </script>
 @endsection
 </body>

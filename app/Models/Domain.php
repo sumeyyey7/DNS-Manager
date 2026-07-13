@@ -10,4 +10,8 @@ class Domain extends Model
     'domain_name',
     'description'
 ];
+    public function dnsRecords()
+{
+    return $this->hasMany(DnsRecord::class);
+}
 }

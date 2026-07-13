@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Domain;
+use App\Models\DnsRecord;
+use App\Models\User;
+use App\Models\Log;
+use Carbon\Carbon;
 
 class Dashboard extends Controller
 {
@@ -13,7 +17,29 @@ class Dashboard extends Controller
         }
 
         $domainCount = Domain::count();
+        $dnsRecordCount = DnsRecord::count();
+        $userCount = User::count();
+        $domainSayisi = Domain::count();
 
-        return view('dashboard', compact('domainCount'));
+        $dnsSayisi = DnsRecord::count();
+
+        $kullaniciSayisi = User::count();
+
+        $islemSayisi = Log::where('created_at', '>=', Carbon::now()->subDay())->count();
+
+        $sonDomainler = Domain::withCount('dnsRecords')
+        ->latest()
+        ->take(3)
+        ->get();
+
+        $sonIslemler = Log::latest()
+        ->take(3)
+        ->get();
+
+        return view('dashboard', compact('domainCount', 'dnsRecordCount', 'userCount', 'domainSayisi', 'dnsSayisi', 'kullaniciSayisi', 'islemSayisi', 'sonDomainler', 'sonIslemler'));
+        
     }
+   
+
+    
 }

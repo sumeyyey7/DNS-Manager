@@ -259,14 +259,13 @@
                 <li class="active"><a href="http://127.0.0.1:8000/dashboard"><i class="fa-solid fa-house"></i> Anasayfa</a></li>
                 <li><a href="/domains"><i class="fa-solid fa-globe"></i> Domainler</a></li>
                 <li><a href="/dns-records"><i class="fa-solid fa-database"></i> DNS Kayıtları</a></li>
-                <li><a href="#"><i class="fa-solid fa-file-lines"></i> Loglar</a></li>
-                <li><a href="#"><i class="fa-solid fa-users"></i> Kullanıcılar</a></li>
+                <li><a href="/logs"><i class="fa-solid fa-file-lines"></i> Loglar</a></li>
                 <li><a href="#"><i class="fa-solid fa-gear"></i> Ayarlar</a></li>
             </ul>
         </div>
 
         <div class="cikis-yap">
-            <a href="#"><i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap</a>
+            <a href="/logout"><i class="fa-solid fa-right-from-bracket"></i>Çıkış</a>
         </div>
     </div>
 

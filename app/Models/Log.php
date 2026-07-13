@@ -4,15 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class DnsRecord extends Model
+class Log extends Model
 {
     protected $fillable = [
-        'domain_id',
-        'host',
-        'type',
-        'value',
-        'ttl'
-    ];
+    'domain_id',
+    'domain_name',
+    'action',
+    'user'
+];
 
     public function domain()
     {

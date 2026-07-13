@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Models\Log;
 
 use App\Models\Domain;
 use Illuminate\Http\Request;
@@ -30,16 +31,22 @@ class DomainController extends Controller
             'description' => 'nullable'
         ]);
 
-        Domain::create([
-            'domain_name' => $request->domain_name,
-            'description' => $request->description,
+        $domain = Domain::create([
+        'domain_name' => $request->domain_name,
+        'description' => $request->description,
         ]);
+
+        Log::create([
+       'domain_id' => $domain->id,
+       'action' => 'Domain eklendi',
+       'user' => session('user')
+    ]);
 
         return redirect('/domains');
     }
 
     //Domain silme işlemi
-    public function destroy($id)
+    public function destroy( int $id)
 {
     if (!session('login')) {
         return redirect('/login');
@@ -55,7 +62,7 @@ class DomainController extends Controller
 
     return redirect('/domains');
 }
-    public function domainSil($id)
+    public function domainSil( int $id)
 {
     // Veritabanından o id'ye ait domaini bul ve sil
     $domain = \App\Models\Domain::findOrFail($id);
@@ -65,7 +72,7 @@ class DomainController extends Controller
     return redirect()->back();
 }
 
-    public function edit($id)
+    public function edit( int $id)
 {
     if (!session('login')) {
         return redirect('/login');
@@ -75,7 +82,7 @@ class DomainController extends Controller
 
     return response()->json($domain);
 }
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id)
 {
     if (!session('login')) {
         return redirect('/login');

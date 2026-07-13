@@ -45,7 +45,6 @@
 
     .btn-geri:hover { background-color: #f8fafc; }
 
-    /* Yeni Kayıt Ekle Butonu (Modalı Açar) */
     .btn-ekle {
         display: inline-flex;
         align-items: center;
@@ -102,8 +101,8 @@
     .islem-butonlari .fa-pen-to-square:hover { color: #2563eb; background-color: #eff6ff; }
     .islem-butonlari .fa-trash-can:hover { color: #dc2626; background-color: #fef2f2; }
 
-    /* MODAL (EKRANIN ORTASINDAKİ FORM) STİLLERİ - FOTOĞRAFA UYGUN */
-    .modal-arka-plan {
+    /* MODAL STİLLERİ */
+    .modal-arka-plan, .sil-modal-arka-plan {
         display: none;
         position: fixed;
         top: 0; left: 0;
@@ -118,11 +117,23 @@
     .modal-kutu {
         background-color: #ffffff;
         padding: 40px;
-        border-radius: 20px; /* Fotoğraftaki gibi daha oval köşeler */
+        border-radius: 20px;
         width: 100%;
         max-width: 550px;
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
         animation: acilisAnimasyonu 0.25s ease-out;
+    }
+
+    .sil-modal-kutu {
+        background-color: #ffffff;
+        padding: 30px;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        animation: acilisAnimasyonu 0.2s ease-out;
     }
 
     @keyframes acilisAnimasyonu {
@@ -131,24 +142,19 @@
     }
 
     .modal-kutu h2 {
-        font-size: 32px; /* Fotoğraftaki büyük başlık stili */
+        font-size: 32px;
         font-weight: 800;
         color: #0f172a;
         margin-bottom: 25px;
     }
 
-    .form-grup {
-        margin-bottom: 20px;
-    }
+    .sil-modal-ikon { font-size: 48px; color: #dc2626; margin-bottom: 15px; }
+    .sil-modal-kutu h2 { font-size: 20px; color: #0f172a; margin-bottom: 8px; }
+    .sil-modal-kutu p { font-size: 14px; color: #64748b; margin-bottom: 25px; }
 
-    .form-grup label {
-        display: block;
-        font-size: 15px;
-        font-weight: 700; /* Fotoğraftaki kalın etiketler */
-        color: #1e293b;
-        margin-bottom: 8px;
-    }
-
+    .form-grup { margin-bottom: 20px; }
+    .form-grup label { display: block; font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 8px; }
+    
     .form-grup input, .form-grup select {
         width: 100%;
         padding: 14px 16px;
@@ -160,48 +166,25 @@
         outline: none;
         background-color: #ffffff;
     }
+    .form-grup input:focus, .form-grup select:focus { border-color: #2563eb; }
 
-    .form-grup input:focus, .form-grup select:focus {
-        border-color: #2563eb;
-    }
+    .modal-butonlar, .sil-modal-butonlar { display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px; }
+    .sil-modal-butonlar { justify-content: center; }
 
-    /* Fotoğraftaki Buton Tasarımları */
-    .modal-butonlar {
-        display: flex;
-        justify-content: flex-end;
-        gap: 12px;
-        margin-top: 30px;
-    }
+    .btn-iptal, .btn-sil-vazgec { background-color: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 15px; }
+    .btn-iptal:hover, .btn-sil-vazgec:hover { background-color: #e2e8f0; }
 
-    .btn-iptal {
-        background-color: #f1f5f9;
-        color: #475569;
-        border: 1px solid #e2e8f0;
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        font-size: 15px;
-    }
-    .btn-iptal:hover { background-color: #e2e8f0; }
-
-    .btn-kaydet {
-        background-color: #2563eb;
-        color: #ffffff;
-        border: none;
-        padding: 12px 28px;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        font-size: 15px;
-    }
+    .btn-kaydet { background-color: #2563eb; color: #ffffff; border: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 15px; }
     .btn-kaydet:hover { background-color: #1d4ed8; }
+
+    .btn-sil-onay { background-color: #dc2626; color: #ffffff; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 15px; }
+    .btn-sil-onay:hover { background-color: #b91c1c; }
 </style>
 
 <div class="sayfa-ust">
     <div class="başlık">   
         <h1>DNS Records - {{ $records->first()->domain->domain_name ?? 'Domain' }}</h1>
-        <p>{{ $records->first()->domain->domain_name ?? 'Domain' }} domainine alt DNS kayıtları</p>
+        <p>{{ $records->first()->domain->domain_name ?? 'Domain' }} domainine ait DNS kayıtları</p>
     </div>
         
     <div class="buton-grubu">
@@ -230,8 +213,16 @@
                 <td>{{ $record->ttl }}</td>
                 <td>
                     <div class="islem-butonlari">
-                        <i class="fa-regular fa-pen-to-square" title="Düzenle"></i>
-                        <i class="fa-regular fa-trash-can" title="Sil"></i>
+                        <i class="fa-regular fa-pen-to-square" title="Düzenle" 
+                           onclick="kayitDuzenle({{ json_encode($record) }})"></i>
+                        
+                        <i class="fa-regular fa-trash-can" title="Sil" 
+                           onclick="silmeOnayiniAc({{ $record->id }})"></i>
+
+                        <form id="sil-formu-{{ $record->id }}" action="/dns-records/{{ $record->id }}" method="POST" style="display: none;">
+                            @csrf
+                            @method('DELETE')
+                        </form>
                     </div>
                 </td>
             </tr>
@@ -242,17 +233,26 @@
 
 <div id="dnsModal" class="modal-arka-plan">
     <div class="modal-kutu">
-        
-        <h2>Yeni Kayıt Ekle</h2>
+        <h2 id="modalBaslik">Yeni Kayıt Ekle</h2>
 
-        <form action="/dns-records" method="POST">
+        <form id="dnsForm" action="/dns-records" method="POST">
             @csrf
+            <div id="methodAlani"></div>
             
-            <input type="hidden" name="domain_id" value="{{ $records->first()->domain_id ?? '' }}">
+            <div class="form-grup">
+                <label>Domain</label>
+                <select name="domain_id" id="form_domain_id" required>
+                    @foreach($domains as $domain)
+                        <option value="{{ $domain->id }}">
+                            {{ $domain->domain_name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
 
             <div class="form-grup">
                 <label>Kayıt Türü (Type)</label>
-                <select name="type" required>
+                <select name="type" id="form_type" required>
                     <option value="A">A</option>
                     <option value="CNAME">CNAME</option>
                     <option value="MX">MX</option>
@@ -263,30 +263,66 @@
 
             <div class="form-grup">
                 <label>Host</label>
-                <input type="text" name="host" placeholder="Örn: @ veya www" required>
+                <input type="text" name="host" id="form_host" placeholder="Örn: @ veya www" required>
             </div>
 
             <div class="form-grup">
                 <label>Değer (Value)</label>
-                <input type="text" name="value" placeholder="Örn: 192.168.1.10" required>
+                <input type="text" name="value" id="form_value" placeholder="Örn: 192.168.1.10" required>
             </div>
 
             <div class="form-grup">
                 <label>TTL</label>
-                <input type="number" name="ttl" value="3600" required>
+                <input type="number" name="ttl" id="form_ttl" value="3600" required>
             </div>
 
             <div class="modal-butonlar">
                 <button type="button" class="btn-iptal" onclick="modalKapat()">İptal</button>
-                <button type="submit" class="btn-kaydet">Kaydet</button>
+                <button type="submit" class="btn-kaydet" id="btnSubmit">Kaydet</button>
             </div>
         </form>
+    </div>
+</div>
 
+<div id="silmeOnayModal" class="sil-modal-arka-plan">
+    <div class="sil-modal-kutu">
+        <div class="sil-modal-ikon"><i class="fa-solid fa-circle-exclamation"></i></div>
+        <h2>Emin misiniz?</h2>
+        <p>Bu DNS kaydını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.</p>
+        <div class="sil-modal-butonlar">
+            <button class="btn-sil-vazgec" onclick="silmeOnayiniKapat()">Vazgeç</button>
+            <button class="btn-sil-onay" id="kesinSilButonu">Evet, Sil</button>
+        </div>
     </div>
 </div>
 
 <script>
+    let silinecekKayitId = null;
+
+    // --- EKLEME VE DÜZENLEME MODALI FONKSİYONLARI ---
     function modalAc() {
+        // Formu temizle ve "Ekleme" moduna getir
+        document.getElementById('modalBaslik').innerText = "Yeni Kayıt Ekle";
+        document.getElementById('dnsForm').action = "/dns-records";
+        document.getElementById('methodAlani').innerHTML = ""; // PUT methodunu kaldır
+        document.getElementById('dnsForm').reset();
+        document.getElementById('form_ttl').value = "3600";
+        document.getElementById('dnsModal').style.display = 'flex';
+    }
+
+    function kayitDuzenle(record) {
+        // Formu "Güncelleme" moduna getir
+        document.getElementById('modalBaslik').innerText = "Kaydı Düzenle";
+        document.getElementById('dnsForm').action = "/dns-records/" + record.id;
+        document.getElementById('methodAlani').innerHTML = '@method("PUT")'; // Laravel Güncelleme şartı
+        
+        // Verileri inputlara doldur
+        document.getElementById('form_domain_id').value = record.domain_id;
+        document.getElementById('form_type').value = record.type;
+        document.getElementById('form_host').value = record.host;
+        document.getElementById('form_value').value = record.value;
+        document.getElementById('form_ttl').value = record.ttl;
+        
         document.getElementById('dnsModal').style.display = 'flex';
     }
 
@@ -294,11 +330,28 @@
         document.getElementById('dnsModal').style.display = 'none';
     }
 
-    window.onclick = function(event) {
-        var modal = document.getElementById('dnsModal');
-        if (event.target == modal) {
-            modal.style.display = "none";
+    // --- SİLME MODALI FONKSİYONLARI ---
+    function silmeOnayiniAc(id) {
+        silinecekKayitId = id;
+        document.getElementById('silmeOnayModal').style.display = 'flex';
+    }
+
+    function silmeOnayiniKapat() {
+        document.getElementById('silmeOnayModal').style.display = 'none';
+    }
+
+    document.getElementById('kesinSilButonu').addEventListener('click', function() {
+        if (silinecekKayitId) {
+            document.getElementById('sil-formu-' + silinecekKayitId).submit();
         }
+    });
+
+    // Boşluğa tıklayınca modalları kapat
+    window.onclick = function(event) {
+        var dnsModal = document.getElementById('dnsModal');
+        var silModal = document.getElementById('silmeOnayModal');
+        if (event.target == dnsModal) modalKapat();
+        if (event.target == silModal) silmeOnayiniKapat();
     }
 </script>
 @endsection

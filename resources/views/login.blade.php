@@ -1,84 +1,150 @@
-<!DOCTYPE html> <!-- HTML5 belgesi olduğunu belirtir -->
-<html lang="tr"> <!-- Sayfanın dilini Türkçe olarak ayarlar -->
+<!DOCTYPE html>
+<html lang="tr">
 <head>
-    <meta charset="UTF-8"> <!-- Türkçe karakter desteği sağlar -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Mobil cihazlarda responsive görünüm sağlar -->
-    <title>Login</title> <!-- Tarayıcı sekmesinde görünen başlık -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Sistem Girişi - DNS Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <style> /* CSS kodlarının başladığı bölüm */
-        body{
-            margin: 0; /* Sayfanın varsayılan dış boşluğunu kaldırır */
-            display: flex; /* Flexbox düzenini aktif eder */
-            justify-content: center; /* İçeriği yatayda ortalar */
-            align-items: center; /* İçeriği dikeyde ortalar */
-            height: 100vh; /* Sayfa yüksekliğini ekranın tamamı yapar */
-            background-color:#0f172a; /* Arka plan rengini koyu lacivert yapar */
-            font-family: Arial, sans-serif; /* Yazı tipini Arial yapar */
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
-        .login-box{
-            width: 350px; /* Giriş kutusunun genişliği */
-            padding: 30px; /* İç boşluk bırakır */
-            border-radius: 10px; /* Köşeleri yuvarlatır */
-            background: #ffffff; /* Arka planı beyaz yapar */
-            box-shadow: 0 0 10px rgba(0,0,0,0.1); /* Kutuya gölge ekler */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #2563eb; /* Projenin ana koyu arka planı */
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
         }
 
-        h2{
-            text-align: center; /* Başlığı ortalar */
+        .login-box {
+            width: 100%;
+            max-width: 420px;
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 16px; /* Diğer modallardaki gibi yumuşak oval köşeler */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
 
-        input{
-            width: 100%; /* Input'un genişliğini kutunun tamamı yapar */
-            padding: 10px; /* İç boşluk verir */
-            margin-top: 5px; /* Üstten boşluk bırakır */
-            box-sizing: border-box; /* Padding'in genişliği büyütmesini engeller */
-            background: #ffffff; /* Arka plan rengini beyaz yapar */
+        .logo-alanı {
+            text-align: center;
+            margin-bottom: 30px;
         }
 
-        button {
-            width: 40%; /* Buton genişliğini %40 yapar */
-            padding: 10px; /* İç boşluk verir */
-            cursor: pointer; /* Üzerine gelince el işareti çıkar */
-            background: #FAF9F7; /* Buton arka plan rengini belirler */
+        .logo-alanı i {
+            font-size: 36px;
+            color: #2563eb; /* Projenin canlı mavi rengi */
+            margin-bottom: 12px;
+        }
 
-    
-            /* Butonu sağa kaydıracak ayarlar */
-            display: block;       /* Butonu blok eleman yapar */
-            margin-left: auto;    /* Sol taraftaki boşluğu artırarak butonu sağa iter */
-            margin-right: 0;      /* Sağ tarafta boşluk bırakmaz */
-}
-    </style> <!-- CSS kodlarının sonu -->
+        .logo-alanı h2 {
+            font-size: 24px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 6px;
+        }
 
+        .logo-alanı p {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .form-grup {
+            margin-bottom: 20px;
+        }
+
+        .form-grup label {
+            display: block;
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        /* Giriş kutularını projedeki form tasarımlarıyla eşitledik */
+        .form-grup input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 15px;
+            color: #1e293b;
+            outline: none;
+            background-color: #ffffff;
+            transition: all 0.2s;
+        }
+
+        .form-grup input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        /* Giriş butonunu tam genişlikte ve projedeki mavi renkte ayarladık */
+        .btn-giris {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            background: #2563eb;
+            color: #ffffff;
+            border: none;
+            padding: 14px 22px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-giris:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .btn-giris:active {
+            transform: translateY(0);
+        }
+    </style>
 </head>
-<body> <!-- Sayfanın görünen kısmı başlar -->
+<body>
 
-<div class="login-box"> <!-- Giriş kutusunu oluşturan div -->
+<div class="login-box">
 
-    <h2>DNS Management System</h2> <!-- Sayfa başlığı -->
+    <div class="logo-alanı">
+        <i class="fa-solid fa-server"></i>
+        <h2>DNS Management</h2>
+        <p>Lütfen hesabınızla giriş yapın</p>
+    </div>
 
-    <form method="POST" action="/login"> <!-- Form gönderildiğinde POST ile /login adresine gider -->
-        @csrf <!-- Laravel CSRF güvenlik doğrulaması -->
+    <form method="POST" action="/login">
+        @csrf 
 
-        <div> <!-- E-mail alanını gruplar -->
-            <label>E-mail</label><br> <!-- E-mail etiketi -->
-            <input type="email" name="email" placeholder="E-mail"> <!-- E-mail giriş kutusu -->
+        <div class="form-grup">
+            <label>E-mail Adresi</label>
+            <input type="email" name="email" placeholder="email" required autocomplete="email" autofocus>
         </div>
 
-        <br> <!-- Satır boşluğu -->
-
-        <div style="color:"> <!-- Şifre alanını gruplar (style şu an kullanılmıyor) -->
-            <label>Şifre</label><br> <!-- Şifre etiketi -->
-            <input type="password" name="password" placeholder="Şifreniz"> <!-- Şifre giriş kutusu -->
+        <div class="form-grup">
+            <label>Şifre</label>
+            <input type="password" name="password" placeholder="••••••••" required autocomplete="current-password">
         </div>
 
-        <br> <!-- Satır boşluğu -->
+        <button type="submit" class="btn-giris">
+            Giriş Yap <i class="fa-solid fa-arrow-right-to-bracket"></i>
+        </button>
 
-        <button type="submit">Giriş Yap</button> <!-- Forma basıldığında gönderme işlemini başlatır -->
+    </form>
 
-    </form> <!-- Formun sonu -->
+</div>
 
-</div> <!-- Login kutusunun sonu -->
-
-</body> <!-- Sayfanın görünen kısmı biter -->
-</html> <!-- HTML belgesi sona erer -->
+</body>
+</html>

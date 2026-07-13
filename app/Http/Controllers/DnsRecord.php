@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\DnsRecord as DnsRecordModel;
 use App\Models\Domain;
+use App\Models\Log;
 
 class DnsRecord extends Controller
 {
@@ -16,8 +17,9 @@ class DnsRecord extends Controller
         }
 
         $records = DnsRecordModel::with('domain')->get();
+        $domains = Domain::all();
 
-        return view('dns-record.index', compact('records'));
+        return view('dns-record.index', compact('records', 'domains'));
     }
 
     // DNS kayıt ekleme sayfası
@@ -55,11 +57,18 @@ class DnsRecord extends Controller
             'ttl'       => $request->ttl,
         ]);
 
+        // Log oluştur
+        Log::create([
+            'domain_id' => $request->domain_id,
+            'action'    => 'DNS kaydı eklendi',
+            'user'      => session('user')
+        ]);
+
         return redirect('/dns-records');
     }
 
     // DNS kaydı sil
-    public function destroy($id)
+    public function destroy(int $id)
     {
         if (!session('login')) {
             return redirect('/login');
@@ -67,12 +76,35 @@ class DnsRecord extends Controller
 
         $record = DnsRecordModel::findOrFail($id);
 
+        Log::create([
+            'domain_id' => $record->domain_id,
+            'action'    => 'DNS kaydı silindi',
+            'user' => session('user')// Burada kullanıcı adını session'dan alabilirsiniz
+        ]);
+
         $record->delete();
 
         return redirect('/dns-records');
     }
-    public function dnsRecords()
+        public function edit(int$id)
 {
-    return $this->hasMany(DnsRecord::class);
+    $record = DnsRecordModel::findOrFail($id);
+
+    return response()->json($record);
+}
+
+public function update(Request $request, int $id)
+{
+    $record = DnsRecordModel::findOrFail($id);
+
+    $record->update([
+        'domain_id' => $request->domain_id,
+        'host'      => $request->host,
+        'type'      => $request->type,
+        'value'     => $request->value,
+        'ttl'       => $request->ttl,
+    ]);
+
+    return redirect('/dns-records');
 }
 }
