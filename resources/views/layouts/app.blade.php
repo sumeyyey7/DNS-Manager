@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>DNS Management System - Dashboard</title>
+    <title>DNS Management System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         
@@ -33,7 +33,7 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between; 
-            padding-bottom: 30px;
+            padding-bottom: 25px; /* Alt boşluğu biraz azaltarak sıkışmayı önledik */
         }
 
         
@@ -52,7 +52,7 @@
             list-style: none;
             padding-left: 15px;
             padding-right: 15px;
-            flex-grow: 1; /* Listeyi yukarıda tutar */
+            flex-grow: 1; 
         }
 
         
@@ -87,32 +87,30 @@
             color: #133659;
         }
 
+        /* ÇIKIŞ ALANI: Tüm kalabalık efektlerden arındırılmış yalın tasarım */
+.cikis-yap {
+    padding-left: 30px; /* Menü hizasıyla eşitlemek için sol boşluk */
+    margin-top: auto;   
+    margin-bottom: 35px;
+}
+
+.cikis-yap a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #64748b; /* İlk başta diğer menü elemanları gibi sade gri */
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+/* Sadece üzerine gelindiğinde net bir tepki verir */
+.cikis-yap a:hover {
+    color: #dc2626; /* Üzerine gelince direkt kırmızıya döner */
+    background: none; /* Arka plan kalabalığı tamamen kaldırıldı */
+}
         
-
-        
-        .cikis-yap {
-            padding-left: 15px;
-            padding-right: 15px;
-        }
-
-        .cikis-yap a {
-            display: flex;
-            align-items: center;
-            padding: 12px 15px;
-            color: #dc2626; 
-            text-decoration: none;
-            font-size: 15px;
-            font-weight: 500;
-            border-radius: 6px;
-        }
-
-        .cikis-yap a i {
-            margin-right: 12px;
-        }
-
-        .cikis-yap a:hover {
-            background-color: #fef2f2;
-        }
 
 
         
@@ -175,7 +173,6 @@
             color: #94a3b8;
         }
 
-        /* Yuvarlak İkon Alanı */
         .kart-ikon {
             width: 45px;
             height: 45px;
@@ -188,7 +185,6 @@
             font-size: 20px;
         }
 
-        
         .kart:nth-child(2) .kart-ikon { background-color: #f3e8ff; color: #a855f7; }
         .kart:nth-child(2) .sayi { color: #a855f7; }
 
@@ -245,6 +241,7 @@
             text-decoration: none;
             font-weight: 500;
         }
+
     </style>
 </head>
 <body>
@@ -256,7 +253,7 @@
             </div>
 
             <ul class="katagori">
-                <li class="active"><a href="http://127.0.0.1:8000/dashboard"><i class="fa-solid fa-house"></i> Anasayfa</a></li>
+                <li><a href="/dashboard"><i class="fa-solid fa-house"></i> Anasayfa</a></li>
                 <li><a href="/domains"><i class="fa-solid fa-globe"></i> Domainler</a></li>
                 <li><a href="/dns-records"><i class="fa-solid fa-database"></i> DNS Kayıtları</a></li>
                 <li><a href="/logs"><i class="fa-solid fa-file-lines"></i> Loglar</a></li>
@@ -265,11 +262,13 @@
         </div>
 
         <div class="cikis-yap">
-            <a href="/logout"><i class="fa-solid fa-right-from-bracket"></i>Çıkış</a>
+            <a href="/logout"><i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap</a>
         </div>
     </div>
 
-    <div class="ana-icerik"> @yield('content')</div>
+    <div class="ana-icerik">
+        @yield('content')
+    </div>
 
 </body>
 </html>

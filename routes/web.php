@@ -32,5 +32,7 @@ Route::put('/dns-records/{id}', [DnsRecord::class, 'update']);
 
 Route::get('/logout', [Dnsmanage::class, 'logout']);
 
+Route::get('/test-record', [Dashboard::class, 'testRecord']);
+
 
 

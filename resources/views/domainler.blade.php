@@ -327,15 +327,15 @@
 <div id="modal" class="modal">
     <div class="modal-icerik">
         <h2 id="modalTitle">Yeni Domain Ekle</h2>
-        <form id="domainForm" action="/domains" method="POST">
+        <form id="domainForm" action="/domains" method="POST" autocomplete="off">
             @csrf
             <div id="methodAlani"></div>
 
             <label>Domain Adı</label>
-            <input id="domain_name" type="text" name="domain_name">
+            <input id="domain_name" type="text" name="domain_name" autocomplete="off">
 
             <label>Açıklama</label>
-            <textarea id="description" name="description"></textarea>
+            <textarea id="description" name="description" autocomplete="off"></textarea>
             
             <div class="modal-footer">
                 <button type="button" class="btn-iptal" onclick="modalKapat()">İptal</button>
@@ -366,6 +366,7 @@
         document.getElementById('silmeOnayModal').style.display = 'block';
     }
 
+    // Boşluğa veya dışarıya tıklandığında silme onay penceresini kapatmak için
     function silmeOnayiniKapat() {
         document.getElementById('silmeOnayModal').style.display = 'none';
     }

@@ -5,9 +5,19 @@ use App\Models\Log;
 
 use App\Models\Domain;
 use Illuminate\Http\Request;
+use App\Services\BindService;
+
+
 
 class DomainController extends Controller
 {
+    private $bindService;
+
+    public function __construct(BindService $bindService)
+    {
+        $this->bindService = $bindService;
+    }
+
     // Domainleri listele
     public function index()
     {
@@ -18,6 +28,17 @@ class DomainController extends Controller
 
         return view('domainler', compact('domains'));
     }
+
+    public function edit(int $id)
+{
+    if (!session('login')) {
+        return redirect('/login');
+    }
+
+    $domain = Domain::findOrFail($id);
+
+    return response()->json($domain);
+}
 
 
     // Domain kaydetme işlemi
@@ -37,42 +58,18 @@ class DomainController extends Controller
         ]);
 
         Log::create([
-       'domain_id' => $domain->id,
-       'action' => 'Domain eklendi',
-       'user' => session('user')
-    ]);
+    'domain_id'   => $domain->id,
+    'domain_name' => $domain->domain_name,
+    'action'      => 'Domain eklendi',
+    'user'        => session('user')
+]);
+    $this->bindService->updateNamedConf();
+    //$this->bindService->reloadBind();
 
         return redirect('/domains');
     }
 
-    //Domain silme işlemi
-    public function destroy( int $id)
-{
-    if (!session('login')) {
-        return redirect('/login');
-    }
-
-    $domain = Domain::find($id);
-
-    if (!$domain) {
-        return redirect('/domains');
-    }
-
-    $domain->delete();
-
-    return redirect('/domains');
-}
-    public function domainSil( int $id)
-{
-    // Veritabanından o id'ye ait domaini bul ve sil
-    $domain = \App\Models\Domain::findOrFail($id);
-    $domain->delete();
-
-    // Sayfayı yenile
-    return redirect()->back();
-}
-
-    public function edit( int $id)
+    public function destroy(int $id)
 {
     if (!session('login')) {
         return redirect('/login');
@@ -80,8 +77,30 @@ class DomainController extends Controller
 
     $domain = Domain::findOrFail($id);
 
-    return response()->json($domain);
+    Log::create([
+        'domain_id'   => $domain->id,
+        'domain_name' => $domain->domain_name,
+        'action'      => 'Domain silindi',
+        'user'        => session('user')
+    ]);
+
+    // Zone dosyasını sil
+    $zoneFile = "/etc/bind/zones/{$domain->domain_name}.db";
+
+    if (file_exists($zoneFile)) {
+        unlink($zoneFile);
+    }
+
+    // Domaini sil
+    $domain->delete();
+
+    // zones.conf'u güncelle
+    $this->bindService->updateNamedConf();
+    //$this->bindService->reloadBind();
+
+    return redirect('/domains');
 }
+
     public function update(Request $request, int $id)
 {
     if (!session('login')) {
@@ -94,14 +113,24 @@ class DomainController extends Controller
     ]);
 
     $domain = Domain::findOrFail($id);
-
+    
+    $oldDomainName = $domain->domain_name; // Eski domain adını sakla   
+   
     $domain->update([
         'domain_name' => $request->domain_name,
         'description' => $request->description
     ]);
+    
+    $oldZoneFile = "/etc/bind/zones/{$oldDomainName}.db";
 
+       if ($oldDomainName != $domain->domain_name && file_exists($oldZoneFile)) {
+       unlink($oldZoneFile);
+} // Eski zone dosyasını sil
+    
+    $this->bindService->updateNamedConf();
+    $this->bindService->generateZoneFiles();
+    //$this->bindService->reloadBind();
     return redirect('/domains');
 }
-    
     
 }

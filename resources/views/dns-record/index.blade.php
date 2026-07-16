@@ -6,12 +6,12 @@
     .sayfa-ust {
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
+        align-items: center;
         margin-bottom: 30px;
     }
 
     .başlık h1 {
-        font-size: 24px;
+        font-size: 28px;
         font-weight: 700;
         color: #0f172a;
         margin-bottom: 5px;
@@ -24,8 +24,7 @@
 
     .buton-grubu {
         display: flex;
-        flex-direction: column;
-        align-items: flex-end;
+        align-items: center;
         gap: 10px;
     }
 
@@ -35,32 +34,38 @@
         gap: 6px;
         background-color: #ffffff;
         color: #475569;
-        border: 1px solid #e2e8f0;
-        padding: 8px 14px;
-        border-radius: 6px;
-        font-weight: 500;
-        font-size: 13px;
+        border: 1px solid #cbd5e1;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
         text-decoration: none;
+        transition: .2s;
     }
 
-    .btn-geri:hover { background-color: #f8fafc; }
+    .btn-geri:hover { 
+        background-color: #e2e8f0; 
+        transform: translateY(-1px);
+    }
 
     .btn-ekle {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
         background-color: #2563eb;
         color: #ffffff;
         border: none;
-        padding: 10px 16px;
+        padding: 10px 18px;
         border-radius: 8px;
         font-weight: 500;
-        font-size: 13px;
+        font-size: 14px;
         cursor: pointer;
-        transition: background 0.2s;
+        transition: .2s;
     }
 
-    .btn-ekle:hover { background-color: #1d4ed8; }
+    .btn-ekle:hover { 
+        background-color: #1d4ed8; 
+    }
 
     /* TABLO STİLLERİ */
     .table-kapsayici {
@@ -79,49 +84,53 @@
 
     .table th {
         color: #64748b;
-        font-weight: 500;
-        padding-bottom: 16px;
+        font-weight: 600;
+        padding-bottom: 15px;
         border-bottom: 1px solid #e2e8f0;
     }
 
     .table td {
         padding: 16px 0;
         border-bottom: 1px solid #f1f5f9;
-        color: #1e293b;
+        color: #334155;
         vertical-align: middle;
     }
 
     .islem-butonlari {
         display: flex;
-        gap: 12px;
-        color: #64748b;
+        justify-content: flex-end;
+        gap: 10px;
     }
 
-    .islem-butonlari i { cursor: pointer; padding: 4px; border-radius: 4px; }
+    .islem-butonlari i { 
+        cursor: pointer; 
+        padding: 8px; 
+        border-radius: 6px; 
+        transition: .2s; 
+    }
+
     .islem-butonlari .fa-pen-to-square:hover { color: #2563eb; background-color: #eff6ff; }
     .islem-butonlari .fa-trash-can:hover { color: #dc2626; background-color: #fef2f2; }
 
-    /* MODAL STİLLERİ */
-    .modal-arka-plan, .sil-modal-arka-plan {
+    /* MODAL ALTYAPISI */
+    .modal, .sil-modal-arka-plan {
         display: none;
         position: fixed;
         top: 0; left: 0;
         width: 100%; height: 100%;
-        background-color: rgba(15, 23, 42, 0.4);
+        background: rgba(15, 23, 42, .45);
         backdrop-filter: blur(4px);
-        z-index: 9999;
-        justify-content: center;
-        align-items: center;
+        z-index: 1000;
     }
 
-    .modal-kutu {
-        background-color: #ffffff;
-        padding: 40px;
-        border-radius: 20px;
-        width: 100%;
-        max-width: 550px;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-        animation: acilisAnimasyonu 0.25s ease-out;
+    .modal-icerik {
+        width: 450px;
+        background: #fff;
+        margin: 60px auto;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 15px 40px rgba(0,0,0,.18);
+        animation: modalAcilis 0.25s ease-out;
     }
 
     .sil-modal-kutu {
@@ -131,54 +140,95 @@
         border: 1px solid #e2e8f0;
         width: 100%;
         max-width: 400px;
+        margin: 150px auto;
         text-align: center;
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-        animation: acilisAnimasyonu 0.2s ease-out;
+        animation: modalAcilis 0.2s ease-out;
     }
 
-    @keyframes acilisAnimasyonu {
+    @keyframes modalAcilis {
         from { transform: scale(0.95); opacity: 0; }
         to { transform: scale(1); opacity: 1; }
     }
 
-    .modal-kutu h2 {
-        font-size: 32px;
-        font-weight: 800;
+    .modal-icerik h2 {
         color: #0f172a;
+        font-size: 30px;
         margin-bottom: 25px;
     }
 
     .sil-modal-ikon { font-size: 48px; color: #dc2626; margin-bottom: 15px; }
-    .sil-modal-kutu h2 { font-size: 20px; color: #0f172a; margin-bottom: 8px; }
+    .sil-modal-kutu h2 { font-size: 20px; color: #0f172a; margin-bottom: 8px; font-weight: 700; }
     .sil-modal-kutu p { font-size: 14px; color: #64748b; margin-bottom: 25px; }
 
     .form-grup { margin-bottom: 20px; }
-    .form-grup label { display: block; font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 8px; }
+    .form-grup label { display: block; margin-bottom: 6px; color: #334155; font-size: 14px; font-weight: 600; }
     
     .form-grup input, .form-grup select {
         width: 100%;
-        padding: 14px 16px;
+        padding: 12px;
         border: 1px solid #cbd5e1;
-        border-radius: 10px;
-        font-family: inherit;
-        font-size: 15px;
-        color: #1e293b;
+        border-radius: 8px;
+        font-size: 14px;
         outline: none;
+        transition: .2s;
         background-color: #ffffff;
     }
-    .form-grup input:focus, .form-grup select:focus { border-color: #2563eb; }
+    .form-grup input:focus, .form-grup select:focus { 
+        border-color: #2563eb; 
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, .15);
+    }
 
-    .modal-butonlar, .sil-modal-butonlar { display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px; }
+    .modal-footer, .sil-modal-butonlar { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
     .sil-modal-butonlar { justify-content: center; }
 
-    .btn-iptal, .btn-sil-vazgec { background-color: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 15px; }
-    .btn-iptal:hover, .btn-sil-vazgec:hover { background-color: #e2e8f0; }
+    .btn-kaydet {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #2563eb;
+        color: #fff;
+        border: none;
+        padding: 11px 22px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: .2s;
+    }
+    .btn-kaydet:hover { background: #1d4ed8; transform: translateY(-1px); }
 
-    .btn-kaydet { background-color: #2563eb; color: #ffffff; border: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 15px; }
-    .btn-kaydet:hover { background-color: #1d4ed8; }
+    .btn-iptal, .btn-sil-vazgec {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        padding: 11px 22px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: .2s;
+    }
+    .btn-iptal:hover, .btn-sil-vazgec:hover { background: #e2e8f0; transform: translateY(-1px); }
 
-    .btn-sil-onay { background-color: #dc2626; color: #ffffff; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 15px; }
-    .btn-sil-onay:hover { background-color: #b91c1c; }
+    .btn-sil-onay { background-color: #dc2626; color: #ffffff; border: none; padding: 11px 22px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; transition: .2s; }
+    .btn-sil-onay:hover { background-color: #b91c1c; transform: translateY(-1px); }
+         .alert-danger{
+    background:#fef2f2;
+    border:1px solid #fecaca;
+    color:#b91c1c;
+    padding:12px;
+    border-radius:8px;
+    margin-bottom:15px;
+}
+
+.alert-danger ul{
+    margin:0;
+    padding-left:20px;
+}
 </style>
 
 <div class="sayfa-ust">
@@ -201,23 +251,20 @@
                 <th>Host</th>
                 <th>Value</th>
                 <th>TTL</th>
-                <th>İşlemler</th>
+                <th style="text-align: right; padding-right: 15px;">İşlemler</th>
             </tr>
         </thead>
         <tbody>
             @foreach($records as $record)
             <tr>
-                <td style="font-weight: 600;">{{ $record->type }}</td>
+                <td style="font-weight: 600; color: #0f172a;">{{ $record->type }}</td>
                 <td>{{ $record->host }}</td>
                 <td style="color: #475569;">{{ $record->value }}</td>
                 <td>{{ $record->ttl }}</td>
                 <td>
-                    <div class="islem-butonlari">
-                        <i class="fa-regular fa-pen-to-square" title="Düzenle" 
-                           onclick="kayitDuzenle({{ json_encode($record) }})"></i>
-                        
-                        <i class="fa-regular fa-trash-can" title="Sil" 
-                           onclick="silmeOnayiniAc({{ $record->id }})"></i>
+                    <div class="islem-butonlari" style="padding-right: 15px;">
+                        <i class="fa-regular fa-pen-to-square" title="Düzenle" onclick="kayitDuzenle({{ json_encode($record) }})"></i>
+                        <i class="fa-regular fa-trash-can" title="Sil" onclick="silmeOnayiniAc({{ $record->id }})"></i>
 
                         <form id="sil-formu-{{ $record->id }}" action="/dns-records/{{ $record->id }}" method="POST" style="display: none;">
                             @csrf
@@ -231,52 +278,66 @@
     </table>
 </div>
 
-<div id="dnsModal" class="modal-arka-plan">
-    <div class="modal-kutu">
+<div id="dnsModal" class="modal">
+    <div class="modal-icerik">
         <h2 id="modalBaslik">Yeni Kayıt Ekle</h2>
 
-        <form id="dnsForm" action="/dns-records" method="POST">
+        <form id="dnsForm" action="/dns-records" method="POST" autocomplete="off">
             @csrf
             <div id="methodAlani"></div>
+             @if ($errors->any())
+<div class="alert-danger">
+    <ul>
+        @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
             
             <div class="form-grup">
                 <label>Domain</label>
                 <select name="domain_id" id="form_domain_id" required>
-                    @foreach($domains as $domain)
-                        <option value="{{ $domain->id }}">
-                            {{ $domain->domain_name }}
-                        </option>
-                    @endforeach
-                </select>
+    @foreach($domains as $domain)
+        <option value="{{ $domain->id }}"
+            {{ old('domain_id') == $domain->id ? 'selected' : '' }}>
+            {{ $domain->domain_name }}
+        </option>
+    @endforeach
+</select>
             </div>
 
             <div class="form-grup">
                 <label>Kayıt Türü (Type)</label>
                 <select name="type" id="form_type" required>
-                    <option value="A">A</option>
-                    <option value="CNAME">CNAME</option>
-                    <option value="MX">MX</option>
-                    <option value="TXT">TXT</option>
-                    <option value="NS">NS</option>
-                </select>
+    <option value="A" {{ old('type')=='A'?'selected':'' }}>A</option>
+    <option value="AAAA" {{ old('type')=='AAAA'?'selected':'' }}>AAAA</option>
+    <option value="CNAME" {{ old('type')=='CNAME'?'selected':'' }}>CNAME</option>
+    <option value="MX" {{ old('type')=='MX'?'selected':'' }}>MX</option>
+    <option value="TXT" {{ old('type')=='TXT'?'selected':'' }}>TXT</option>
+    <option value="NS" {{ old('type')=='NS'?'selected':'' }}>NS</option>
+</select>
             </div>
 
             <div class="form-grup">
                 <label>Host</label>
-                <input type="text" name="host" id="form_host" placeholder="Örn: @ veya www" required>
+                <input
+                type="text"name="host"id="form_host"value="{{ old('host') }}"placeholder="Örn: @ veya www"required>
             </div>
 
             <div class="form-grup">
                 <label>Değer (Value)</label>
-                <input type="text" name="value" id="form_value" placeholder="Örn: 192.168.1.10" required>
+                <input
+                type="text"name="value"id="form_value"value="{{ old('value') }}"placeholder="Örn: 192.168.1.10"required>
             </div>
 
             <div class="form-grup">
                 <label>TTL</label>
-                <input type="number" name="ttl" id="form_ttl" value="3600" required>
+                <input
+                type="number"name="ttl"id="form_ttl"value="{{ old('ttl',3600) }}"required>
             </div>
 
-            <div class="modal-butonlar">
+            <div class="modal-footer">
                 <button type="button" class="btn-iptal" onclick="modalKapat()">İptal</button>
                 <button type="submit" class="btn-kaydet" id="btnSubmit">Kaydet</button>
             </div>
@@ -301,30 +362,34 @@
 
     // --- EKLEME VE DÜZENLEME MODALI FONKSİYONLARI ---
     function modalAc() {
-        // Formu temizle ve "Ekleme" moduna getir
         document.getElementById('modalBaslik').innerText = "Yeni Kayıt Ekle";
         document.getElementById('dnsForm').action = "/dns-records";
-        document.getElementById('methodAlani').innerHTML = ""; // PUT methodunu kaldır
-        document.getElementById('dnsForm').reset();
+        document.getElementById('methodAlani').innerHTML = ""; 
+        //document.getElementById('dnsForm').reset();
         document.getElementById('form_ttl').value = "3600";
-        document.getElementById('dnsModal').style.display = 'flex';
+        document.getElementById('btnSubmit').innerHTML = "Kaydet";
+        document.getElementById('dnsModal').style.display = 'block';
+        updateForm();
     }
+    
 
+    // Düzenleme modunda da formun temiz kalması ve geçmişi önermemesi için autocomplete özellikleri korundu
     function kayitDuzenle(record) {
-        // Formu "Güncelleme" moduna getir
         document.getElementById('modalBaslik').innerText = "Kaydı Düzenle";
         document.getElementById('dnsForm').action = "/dns-records/" + record.id;
-        document.getElementById('methodAlani').innerHTML = '@method("PUT")'; // Laravel Güncelleme şartı
+        document.getElementById('methodAlani').innerHTML = '<input type="hidden" name="_method" value="PUT">';
         
-        // Verileri inputlara doldur
         document.getElementById('form_domain_id').value = record.domain_id;
         document.getElementById('form_type').value = record.type;
         document.getElementById('form_host').value = record.host;
         document.getElementById('form_value').value = record.value;
         document.getElementById('form_ttl').value = record.ttl;
+        document.getElementById('btnSubmit').innerHTML = "Güncelle";
         
-        document.getElementById('dnsModal').style.display = 'flex';
+        document.getElementById('dnsModal').style.display = 'block';
+        updateForm();
     }
+    
 
     function modalKapat() {
         document.getElementById('dnsModal').style.display = 'none';
@@ -333,7 +398,7 @@
     // --- SİLME MODALI FONKSİYONLARI ---
     function silmeOnayiniAc(id) {
         silinecekKayitId = id;
-        document.getElementById('silmeOnayModal').style.display = 'flex';
+        document.getElementById('silmeOnayModal').style.display = 'block';
     }
 
     function silmeOnayiniKapat() {
@@ -346,12 +411,60 @@
         }
     });
 
-    // Boşluğa tıklayınca modalları kapat
+    // Dış boşluğa tıklanınca modalları kapatma güvenliği
     window.onclick = function(event) {
         var dnsModal = document.getElementById('dnsModal');
         var silModal = document.getElementById('silmeOnayModal');
         if (event.target == dnsModal) modalKapat();
         if (event.target == silModal) silmeOnayiniKapat();
     }
+    @if ($errors->any())
+window.onload = function () {
+    document.getElementById('dnsModal').style.display = 'block';
+};
+@endif  
+    const typeSelect = document.getElementById('form_type');
+const valueInput = document.getElementById('form_value');
+const hostInput = document.getElementById('form_host');
+
+typeSelect.addEventListener('change', updateForm);
+
+function updateForm() {
+
+    switch(typeSelect.value) {
+
+        case 'A':
+            valueInput.placeholder = "Örn: 192.168.1.10";
+            hostInput.placeholder = "Örn: @ veya www";
+            break;
+
+        case 'AAAA':
+            valueInput.placeholder = "Örn: 2001:db8::1";
+            hostInput.placeholder = "Örn: @ veya www";
+            break;
+
+        case 'CNAME':
+            valueInput.placeholder = "Örn: example.com";
+            hostInput.placeholder = "Örn: www";
+            break;
+
+        case 'MX':
+            valueInput.placeholder = "Örn: mail.example.com";
+            hostInput.placeholder = "Örn: @";
+            break;
+
+        case 'NS':
+            valueInput.placeholder = "Örn: ns1.example.com";
+            hostInput.placeholder = "Örn: @";
+            break;
+
+        case 'TXT':
+            valueInput.placeholder = 'Örn: v=spf1 include:_spf.google.com ~all';
+            hostInput.placeholder = "Örn: @";
+            break;
+    }
+}
+
+updateForm();
 </script>
 @endsection
