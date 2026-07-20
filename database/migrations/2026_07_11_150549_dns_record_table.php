@@ -22,6 +22,10 @@ return new class extends Migration
 
             $table->string('value');
 
+            $table->string('internal_ip')->nullable();
+
+            $table->string('external_ip')->nullable();
+
             $table->integer('ttl')->default(3600);
 
             $table->timestamps();

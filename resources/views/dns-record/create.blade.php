@@ -2,7 +2,7 @@
 
 @section('content')
 
-<h1>DNS Kaydı Ekle</h1>
+<h1>Add DNS Record</h1>
 
 <form action="/dns-records" method="POST">
 
@@ -24,7 +24,7 @@
 
     <br><br>
 
-    <label>Kayıt Türü</label>
+    <label>Record Type</label>
 
     <select name="type">
         <option>A</option>
@@ -37,7 +37,7 @@
 
     <br><br>
 
-    <label>Değer</label>
+    <label>Value</label>
 
     <input type="text" name="value">
 
@@ -45,7 +45,7 @@
 
     <label>Host</label>
 
-<input type="text" name="host" placeholder="@ veya www">
+<input type="text" name="host" placeholder="@ or www">
 
 <br><br>
 
@@ -57,7 +57,7 @@
 
     <button type="submit">
 
-        Kaydet
+        Save
 
     </button>
 

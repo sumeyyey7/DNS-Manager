@@ -2,43 +2,43 @@
 
 @section('content')
 <div class="sayfa-baslik">
-    <h1>Anasayfa</h1>
-    <p>Sistem özeti ve istatistikler</p>
+    <h1>Dashboard</h1>
+    <p>System overview and statistics</p>
 </div>
 
 <div class="kartlar-kapsayici">
     <div class="kart">
         <div class="kart-bilgi">
-            <h3>Toplam Domain</h3>
+            <h3>Total Domains</h3>
             <div class="sayi">{{ $domainCount }}</div>
-            <div class="alt-yazi">Aktif domain sayısı</div>
+            <div class="alt-yazi">Number of active domains</div>
         </div>
         <div class="kart-ikon"><i class="fa-solid fa-globe"></i></div>
     </div>
 
     <div class="kart">
         <div class="kart-bilgi">
-            <h3>Toplam DNS Kaydı</h3>
+            <h3>Total DNS Records</h3>
             <div class="sayi">{{ $dnsRecordCount }}</div>
-            <div class="alt-yazi">Tüm kayıtların toplamı</div>
+            <div class="alt-yazi">Total number of records</div>
         </div>
         <div class="kart-ikon"><i class="fa-solid fa-database"></i></div>
     </div>
 
     <div class="kart">
         <div class="kart-bilgi">
-            <h3>Toplam Kullanıcı</h3>
+            <h3>Total Users</h3>
             <div class="sayi">{{ $userCount }}</div>
-            <div class="alt-yazi">Sistemdeki kullanıcı sayısı</div>
+            <div class="alt-yazi">Number of registered users</div>
         </div>
         <div class="kart-ikon"><i class="fa-solid fa-users"></i></div>
     </div>
 
     <div class="kart">
         <div class="kart-bilgi">
-            <h3>Son 24 Saat İşlem</h3>
+            <h3>Last 24 Hours Activity</h3>
             <div class="sayi">{{ $islemSayisi ?? 0 }}</div>
-            <div class="alt-yazi">Son 24 saatteki işlem sayısı</div>
+            <div class="alt-yazi">Actions in the last 24 hours</div>
         </div>
         <div class="kart-ikon"><i class="fa-solid fa-chart-line"></i></div>
     </div>
@@ -47,12 +47,12 @@
 <div class="alt-blocks" style="display: flex; gap: 20px;">
 
     <div class="blok" style="background-color: #ffffff; flex: 1; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0;">
-        <h2 style="font-size: 16px; color: #0f172a; margin-bottom: 20px;">Son Eklenen Domainler</h2>
+        <h2 style="font-size: 16px; color: #0f172a; margin-bottom: 20px;">Recently Added Domains</h2>
         <table>
             <thead>
                 <tr>
                     <th>Domain</th>
-                    <th style="text-align: right; padding-right: 10px;">Kayıt Sayısı</th>
+                    <th style="text-align: right; padding-right: 10px;">Record Count</th>
                 </tr>
             </thead>
             <tbody>
@@ -69,7 +69,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="2" style="color: #94a3b8; text-align: center; padding: 20px 0;">Henüz eklenmiş bir domain bulunmuyor.</td>
+                    <td colspan="2" style="color: #94a3b8; text-align: center; padding: 20px 0;">No domains have been added yet.</td>
                 </tr>
                 @endforelse
             </tbody>
@@ -77,12 +77,12 @@
     </div>
 
     <div class="blok" style="background-color: #ffffff; flex: 1; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0;">
-        <h2 style="font-size: 16px; color: #0f172a; margin-bottom: 20px;">Son İşlemler</h2>
+        <h2 style="font-size: 16px; color: #0f172a; margin-bottom: 20px;">Recent Logs</h2>
         <table>
             <thead>
                 <tr>
-                    <th>İşlem</th>
-                    <th style="text-align: right; padding-right: 10px;">Tarih</th>
+                    <th>Action</th>
+                    <th style="text-align: right; padding-right: 10px;">Date</th>
                 </tr>
             </thead>
             <tbody>
@@ -96,7 +96,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="2" style="color: #94a3b8; text-align: center; padding: 20px 0;">Henüz bir sistem hareketi kaydedilmedi.</td>
+                    <td colspan="2" style="color: #94a3b8; text-align: center; padding: 20px 0;">No system logs recorded yet.</td>
                 </tr>
                 @endforelse
             </tbody>

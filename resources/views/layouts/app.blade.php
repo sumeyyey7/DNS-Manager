@@ -253,16 +253,16 @@
             </div>
 
             <ul class="katagori">
-                <li><a href="/dashboard"><i class="fa-solid fa-house"></i> Anasayfa</a></li>
-                <li><a href="/domains"><i class="fa-solid fa-globe"></i> Domainler</a></li>
-                <li><a href="/dns-records"><i class="fa-solid fa-database"></i> DNS Kayıtları</a></li>
-                <li><a href="/logs"><i class="fa-solid fa-file-lines"></i> Loglar</a></li>
-                <li><a href="#"><i class="fa-solid fa-gear"></i> Ayarlar</a></li>
+                <li><a href="/dashboard"><i class="fa-solid fa-house"></i> Dashboard</a></li>
+                <li><a href="/domains"><i class="fa-solid fa-globe"></i> Domains</a></li>
+                <li><a href="/dns-records"><i class="fa-solid fa-database"></i> DNS Records</a></li>
+                <li><a href="/logs"><i class="fa-solid fa-file-lines"></i> Logs</a></li>
+                <li><a href="#"><i class="fa-solid fa-gear"></i> Settings</a></li>
             </ul>
         </div>
 
         <div class="cikis-yap">
-            <a href="/logout"><i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap</a>
+            <a href="/logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
         </div>
     </div>
 

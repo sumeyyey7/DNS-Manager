@@ -14,9 +14,9 @@ class DnsRecord extends Controller
     private $bindService;
 
     public function __construct(BindService $bindService)
-{
-    $this->bindService = $bindService;
-}
+    {
+        $this->bindService = $bindService;
+    }
 
     // DNS kayıtlarını listele
     public function index()
@@ -50,53 +50,54 @@ class DnsRecord extends Controller
             return redirect('/login');
         }
 
-       $request->validate([
-    'domain_id' => 'required|exists:domains,id',
-    'host'      => 'required|max:255',
-    'type'      => 'required|in:A,AAAA,CNAME,MX,NS,TXT',
-    'ttl'       => 'required|integer|min:1',
-    'value'     => ['required', function ($attribute, $value, $fail) use ($request) {
+        $request->validate([
+            'domain_id' => 'required|exists:domains,id',
+            'host'      => ['required', 'regex:/^(@|[a-zA-Z0-9]([a-zA-Z0-9-\.]*[a-zA-Z0-9])?)$/'],
+            'type'      => 'required|in:A,AAAA,CNAME,MX,NS,TXT',
+            'ttl'       => 'required|integer|min:1',
+            'value'     => ['required', function ($attribute, $value, $fail) use ($request) {
 
-            switch ($request->type) {
+                    switch ($request->type) {
 
-                case 'A':
-                    if (!filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-                        $fail('Geçerli bir IPv4 adresi giriniz.');
+                        case 'A':
+                            if (!filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                                $fail('Please enter a valid IPv4 address.');
+                            }
+                            break;
+
+                        case 'AAAA':
+                            if (!filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                                $fail('Please enter a valid IPv6 address.');
+                            }
+                            break;
+
+                        case 'CNAME':
+                        case 'MX':
+                        case 'NS':
+                            if (!filter_var($value, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)) {
+                                $fail('Please enter a valid domain name.');
+                            }
+                            break;
+
+                        case 'TXT':
+                            // TXT kayıtlarında ek kontrol yok
+                            break;
                     }
-                    break;
+                }
+            ]
+        ]);
 
-                case 'AAAA':
-                    if (!filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-                        $fail('Geçerli bir IPv6 adresi giriniz.');
-                    }
-                    break;
-
-                case 'CNAME':
-                case 'MX':
-                case 'NS':
-                    if (!filter_var($value, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)) {
-                        $fail('Geçerli bir domain giriniz.');
-                    }
-                    break;
-
-                case 'TXT':
-                    // TXT kayıtlarında ek kontrol yok
-                    break;
-            }
-        }
-    ]
-]);
         $exists = DnsRecordModel::where('domain_id', $request->domain_id)
-    ->where('host', $request->host)
-    ->where('type', $request->type)
-    ->where('value', $request->value)
-    ->exists();
+            ->where('host', $request->host)
+            ->where('type', $request->type)
+            ->where('value', $request->value)
+            ->exists();
 
-if ($exists) {
-    return back()
-        ->withErrors(['value' => 'Bu DNS kaydı zaten mevcut.'])
-        ->withInput();
-}
+        if ($exists) {
+            return back()
+                ->withErrors(['value' => 'This DNS record already exists.'])
+                ->withInput();
+        }
 
         DnsRecordModel::create([
             'domain_id' => $request->domain_id,
@@ -110,14 +111,15 @@ if ($exists) {
         $domain = Domain::findOrFail($request->domain_id);
 
         Log::create([
-        'domain_id'   => $domain->id,
-        'domain_name' => $domain->domain_name,
-        'action'      => 'DNS kaydı eklendi',
-        'user'        => session('user')
-    ]);
+            'domain_id'   => $domain->id,
+            'domain_name' => $domain->domain_name,
+            'action'      => 'DNS record added',
+            'user'        => session('user')
+        ]);
+
         $this->bindService->generateZoneFiles();
         //$this->bindService->reloadBind();
- 
+
         return redirect('/dns-records');
     }
 
@@ -129,103 +131,106 @@ if ($exists) {
         }
 
         $record = DnsRecordModel::findOrFail($id);
-
         $domain = Domain::findOrFail($record->domain_id);
 
         Log::create([
-        'domain_id'   => $domain->id,
-        'domain_name' => $domain->domain_name,
-        'action'      => 'DNS kaydı silindi',
-        'user'        => session('user')
-]);
+            'domain_id'   => $domain->id,
+            'domain_name' => $domain->domain_name,
+            'action'      => 'DNS record deleted',
+            'user'        => session('user')
+        ]);
 
         $record->delete();
 
         $this->bindService->generateZoneFiles();
         //$this->bindService->reloadBind();
+
         return redirect('/dns-records');
     }
-        public function edit(int$id)
-{
-    $record = DnsRecordModel::findOrFail($id);
 
-    return response()->json($record);
-}
+    public function edit(int $id)
+    {
+        $record = DnsRecordModel::findOrFail($id);
 
-public function update(Request $request, int $id)
-{
-    $record = DnsRecordModel::findOrFail($id);
+        return response()->json($record);
+    }
 
-    $request->validate([
-    'domain_id' => 'required|exists:domains,id',
-    'host'      => 'required|max:255',
-    'type'      => 'required|in:A,AAAA,CNAME,MX,NS,TXT',
-    'ttl'       => 'required|integer|min:1',
-    'value'     => [
-        'required',
-        function ($attribute, $value, $fail) use ($request) {
+    public function update(Request $request, int $id)
+    {
+        $record = DnsRecordModel::findOrFail($id);
 
-            switch ($request->type) {
+        $request->validate([
+            'domain_id' => 'required|exists:domains,id',
+            'host'      => ['required', 'regex:/^(@|[a-zA-Z0-9]([a-zA-Z0-9-\.]*[a-zA-Z0-9])?)$/'],
+            'type'      => 'required|in:A,AAAA,CNAME,MX,NS,TXT',
+            'ttl'       => 'required|integer|min:1',
+            'value'     => [
+                'required',
+                function ($attribute, $value, $fail) use ($request) {
 
-                case 'A':
-                    if (!filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-                        $fail('Geçerli bir IPv4 adresi giriniz.');
+                    switch ($request->type) {
+
+                        case 'A':
+                            if (!filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                                $fail('Please enter a valid IPv4 address.');
+                            }
+                            break;
+
+                        case 'AAAA':
+                            if (!filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                                $fail('Please enter a valid IPv6 address.');
+                            }
+                            break;
+
+                        case 'CNAME':
+                        case 'MX':
+                        case 'NS':
+                            if (!filter_var($value, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)) {
+                                $fail('Please enter a valid domain name.');
+                            }
+                            break;
+
+                        case 'TXT':
+                            // TXT kayıtlarında ek kontrol yok
+                            break;
                     }
-                    break;
+                }
+            ]
+        ]);
 
-                case 'AAAA':
-                    if (!filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-                        $fail('Geçerli bir IPv6 adresi giriniz.');
-                    }
-                    break;
+        $exists = DnsRecordModel::where('domain_id', $request->domain_id)
+            ->where('host', $request->host)
+            ->where('type', $request->type)
+            ->where('value', $request->value)
+            ->where('id', '!=', $id)
+            ->exists();
 
-                case 'CNAME':
-                case 'MX':
-                case 'NS':
-                    if (!filter_var($value, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)) {
-                        $fail('Geçerli bir domain giriniz.');
-                    }
-                    break;
-
-                case 'TXT':
-                    // TXT kayıtlarında ek kontrol yok
-                    break;
-            }
+        if ($exists) {
+            return back()
+                ->withErrors(['value' => 'This DNS record already exists.'])
+                ->withInput();
         }
-    ]
-]); 
-    $exists = DnsRecordModel::where('domain_id', $request->domain_id)
-    ->where('host', $request->host)
-    ->where('type', $request->type)
-    ->where('value', $request->value)
-    ->where('id', '!=', $id)
-    ->exists();
 
-if ($exists) {
-    return back()
-        ->withErrors(['value' => 'Bu DNS kaydı zaten mevcut.'])
-        ->withInput();
-}
-    $record->update([
-        'domain_id' => $request->domain_id,
-        'host'      => $request->host,
-        'type'      => $request->type,
-        'value'     => $request->value,
-        'ttl'       => $request->ttl,
-    ]);
-    $domain = Domain::findOrFail($request->domain_id);
+        $record->update([
+            'domain_id' => $request->domain_id,
+            'host'      => $request->host,
+            'type'      => $request->type,
+            'value'     => $request->value,
+            'ttl'       => $request->ttl,
+        ]);
 
-Log::create([
-    'domain_id'   => $domain->id,
-    'domain_name' => $domain->domain_name,
-    'action'      => 'DNS kaydı güncellendi',
-    'user'        => session('user')
-]);
+        $domain = Domain::findOrFail($request->domain_id);
 
-    $this->bindService->generateZoneFiles();
-    //$this->bindService->reloadBind();
+        Log::create([
+            'domain_id'   => $domain->id,
+            'domain_name' => $domain->domain_name,
+            'action'      => 'DNS record updated',
+            'user'        => session('user')
+        ]);
 
-    return redirect('/dns-records');
-}
-   
+        $this->bindService->generateZoneFiles();
+        //$this->bindService->reloadBind();
+
+        return redirect('/dns-records');
+    }
 }

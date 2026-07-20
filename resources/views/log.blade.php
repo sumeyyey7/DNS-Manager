@@ -88,8 +88,8 @@
 
 <div class="sayfa-ust">
     <div class="başlık">
-        <h1>Sistem Logları</h1>
-        <p>Panel üzerinde gerçekleştirilen tüm işlemler</p>
+        <h1>System Logs</h1>
+        <p>All activities performed on the panel</p>
     </div>
 </div>
 
@@ -99,10 +99,10 @@
 
 <thead>
 <tr>
-    <th>İşlem</th>
+    <th>Action</th>
     <th>Domain</th>
-    <th>Kullanıcı</th>
-    <th>Tarih</th>
+    <th>User</th>
+    <th>Date</th>
 </tr>
 </thead>
 
@@ -163,7 +163,7 @@
 
 <tr>
     <td colspan="4" style="text-align:center;">
-        Henüz log kaydı bulunmuyor.
+        No log records found yet.
     </td>
 </tr>
 

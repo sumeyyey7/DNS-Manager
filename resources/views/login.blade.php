@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Sistem Girişi - DNS Management System</title>
+    <title>System Login - DNS Management System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
@@ -122,24 +122,24 @@
     <div class="logo-alanı">
         <i class="fa-solid fa-server"></i>
         <h2>DNS Management</h2>
-        <p>Lütfen hesabınızla giriş yapın</p>
+        <p>Please log in with your account</p>
     </div>
 
     <form method="POST" action="/login">
         @csrf 
 
         <div class="form-grup">
-            <label>E-mail Adresi</label>
-            <input type="email" name="email" placeholder="email" required autocomplete="email" autofocus>
+            <label>Email Address</label>
+            <input type="email" name="email" placeholder="email@example.com" required autocomplete="email" autofocus>
         </div>
 
         <div class="form-grup">
-            <label>Şifre</label>
+            <label>Password</label>
             <input type="password" name="password" placeholder="••••••••" required autocomplete="current-password">
         </div>
 
         <button type="submit" class="btn-giris">
-            Giriş Yap <i class="fa-solid fa-arrow-right-to-bracket"></i>
+            Log In <i class="fa-solid fa-arrow-right-to-bracket"></i>
         </button>
 
     </form>

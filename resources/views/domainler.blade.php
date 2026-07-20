@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Domainler</title>
+    <title>Domains</title>
      @extends('layouts.app')
 
 @section('content')
@@ -275,12 +275,12 @@
 <div class="sayfa-ust">
     <div class="başlık">   
         <h1>Domains</h1>
-        <p>Tüm domainlerinizi yönetin</p>
+        <p>Manage all your domains</p>
     </div>
         
     <div class="ekleme">  
         <button type="button" class="btn-ekle" onclick="modalAc()">
-            <i class="fa-solid fa-plus"></i> Yeni Domain Ekle
+            <i class="fa-solid fa-plus"></i> Add New Domain
         </button>
     </div>
 </div>
@@ -290,11 +290,11 @@
         <thead>
             <tr>
                 <th>Domain</th>
-                <th>Kayıt Sayısı</th>
-                <th>Durum</th>
-                <th>Eklenme Tarihi</th>
-                <th>Açıklama</th>
-                <th style="text-align: right; padding-right: 15px;">İşlemler</th>
+                <th>Record Count</th>
+                <th>Status</th>
+                <th>Created At</th>
+                <th>Description</th>
+                <th style="text-align: right; padding-right: 15px;">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -302,15 +302,15 @@
             <tr>
                 <td><a href="/domains/{{ $domain->id }}/dns-records" class="domain-link">{{ $domain->domain_name }}</a></td>
                 <td style="font-weight: 600; padding-left: 15px;">{{ $domain->dns_records_count ?? 0 }}</td> 
-                <td><span class="badge-aktif">Aktif</span></td> 
+                <td><span class="badge-aktif">Active</span></td> 
                 <td>{{ $domain->created_at ? $domain->created_at->format('d.m.Y H:i') : '' }}</td>
                 <td>{{ $domain->description }}</td>
                 <td>
                     <div class="islem-butonlari" style="justify-content: flex-end; padding-right:15px;">
                        
-                       <i class="fa-regular fa-pen-to-square" title="Düzenle" onclick="duzenle({{ $domain->id }})"></i>
+                       <i class="fa-regular fa-pen-to-square" title="Edit" onclick="duzenle({{ $domain->id }})"></i>
 
-                       <i class="fa-regular fa-trash-can" title="Sil" onclick="silmeOnayiniAc({{ $domain->id }})"></i>
+                       <i class="fa-regular fa-trash-can" title="Delete" onclick="silmeOnayiniAc({{ $domain->id }})"></i>
 
                        <form id="sil-formu-{{ $domain->id }}" action="/domains/{{ $domain->id }}" method="POST" style="display:none;">
                             @csrf
@@ -326,20 +326,20 @@
 
 <div id="modal" class="modal">
     <div class="modal-icerik">
-        <h2 id="modalTitle">Yeni Domain Ekle</h2>
+        <h2 id="modalTitle">Add New Domain</h2>
         <form id="domainForm" action="/domains" method="POST" autocomplete="off">
             @csrf
             <div id="methodAlani"></div>
 
-            <label>Domain Adı</label>
+            <label>Domain Name</label>
             <input id="domain_name" type="text" name="domain_name" autocomplete="off">
 
-            <label>Açıklama</label>
+            <label>Description</label>
             <textarea id="description" name="description" autocomplete="off"></textarea>
             
             <div class="modal-footer">
-                <button type="button" class="btn-iptal" onclick="modalKapat()">İptal</button>
-                <button type="submit" class="btn-kaydet">Kaydet</button>
+                <button type="button" class="btn-iptal" onclick="modalKapat()">Cancel</button>
+                <button type="submit" class="btn-kaydet">Save</button>
             </div>
         </form>
     </div>
@@ -348,11 +348,11 @@
 <div id="silmeOnayModal" class="sil-modal-arka-plan">
     <div class="sil-modal-kutu">
         <div class="sil-modal-ikon"><i class="fa-solid fa-circle-exclamation"></i></div>
-        <h2>Emin misiniz?</h2>
-        <p>Bu domaini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.</p>
+        <h2>Are you sure?</h2>
+        <p>Are you sure you want to delete this domain? This action cannot be undone.</p>
         <div class="sil-modal-butonlar">
-            <button class="btn-sil-vazgec" onclick="silmeOnayiniKapat()">Vazgeç</button>
-            <button class="btn-sil-onay" id="kesinSilButonu">Evet, Sil</button>
+            <button class="btn-sil-vazgec" onclick="silmeOnayiniKapat()">Cancel</button>
+            <button class="btn-sil-onay" id="kesinSilButonu">Yes, Delete</button>
         </div>
     </div>
 </div>
@@ -379,11 +379,11 @@
 
     // --- EKLEME/DÜZENLEME MODAL FONKSİYONLARI ---
     function modalAc(){
-        document.getElementById("modalTitle").innerHTML = "Yeni Domain Ekle";
+        document.getElementById("modalTitle").innerHTML = "Add New Domain";
         document.getElementById("domainForm").action = "/domains";
         document.getElementById("methodAlani").innerHTML = "";
         document.getElementById("domainForm").reset();
-        document.querySelector(".btn-kaydet").innerHTML = "Kaydet";
+        document.querySelector(".btn-kaydet").innerHTML = "Save";
         document.getElementById("modal").style.display="block";
     }
 
@@ -396,10 +396,10 @@
         .then(response => response.json())
         .then(domain => {
             document.getElementById("modal").style.display="block";
-            document.getElementById("modalTitle").innerHTML = "Domain Düzenle";
+            document.getElementById("modalTitle").innerHTML = "Edit Domain";
             document.getElementById("domain_name").value = domain.domain_name;
             document.getElementById("description").value = domain.description;
-            document.querySelector(".btn-kaydet").innerHTML = "Güncelle";
+            document.querySelector(".btn-kaydet").innerHTML = "Update";
 
             let form = document.getElementById("domainForm");
             form.action = "/domains/" + id;
