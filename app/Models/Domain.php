@@ -8,7 +8,8 @@ class Domain extends Model
 {
     protected $fillable = [
     'domain_name',
-    'description'
+    'description',
+    'status',
 ];
     public function dnsRecords()
 {

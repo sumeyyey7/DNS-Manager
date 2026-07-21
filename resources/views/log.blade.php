@@ -95,83 +95,87 @@
 
 <div class="table-kapsayici">
 
-<table class="table">
+    <table class="table">
 
-<thead>
-<tr>
-    <th>Action</th>
-    <th>Domain</th>
-    <th>User</th>
-    <th>Date</th>
-</tr>
-</thead>
+        <thead>
+            <tr>
+                <th>Action</th>
+                <th>Domain</th>
+                <th>User</th>
+                <th>Date</th>
+            </tr>
+        </thead>
 
-<tbody>
+        <tbody>
 
-@forelse($logs as $log)
+        @forelse($logs as $log)
 
-<tr>
+            <tr>
 
-<td>
+                <td>
 
-@if(str_contains(strtolower($log->action),'ekle'))
+                    @php
+                        $action = strtolower($log->action);
+                    @endphp
 
-<span class="badge badge-primary">
-<i class="fa-solid fa-plus"></i>
-{{ $log->action }}
-</span>
+                    @if(str_contains($action,'ekle'))
 
-@elseif(str_contains(strtolower($log->action),'güncelle'))
+                        <span class="badge badge-primary">
+                            <i class="fa-solid fa-plus"></i>
+                            {{ $log->action }}
+                        </span>
 
-<span class="badge badge-warning">
-<i class="fa-regular fa-pen-to-square"></i>
-{{ $log->action }}
-</span>
+                    @elseif(str_contains($action,'güncelle'))
 
-@elseif(str_contains(strtolower($log->action),'sil'))
+                        <span class="badge badge-warning">
+                            <i class="fa-regular fa-pen-to-square"></i>
+                            {{ $log->action }}
+                        </span>
 
-<span class="badge badge-danger">
-<i class="fa-regular fa-trash-can"></i>
-{{ $log->action }}
-</span>
+                    @elseif(str_contains($action,'sil'))
 
-@else
+                        <span class="badge badge-danger">
+                            <i class="fa-regular fa-trash-can"></i>
+                            {{ $log->action }}
+                        </span>
 
-<span class="badge badge-secondary">
-{{ $log->action }}
-</span>
+                    @else
 
-@endif
+                        <span class="badge badge-secondary">
+                            {{ $log->action }}
+                        </span>
 
-</td>
+                    @endif
 
-<td class="domain-vurgu">
-{{ $log->domain_name }}
-</td>
+                </td>
 
-<td>
-{{ $log->user }}
-</td>
+                <td class="domain-vurgu">
+                    {{ $log->domain_name ?? '-' }}
+                </td>
 
-<td class="tarih-renk">
-{{ $log->created_at->format('d.m.Y H:i') }}
-</td>
+                <td>
+                    {{ $log->user ?? '-' }}
+                </td>
 
-</tr>
+                <td class="tarih-renk">
+                    {{ $log->created_at?->format('d.m.Y H:i') ?? '-' }}
+                </td>
 
-@empty
+            </tr>
 
-<tr>
-    <td colspan="4" style="text-align:center;">
-        No log records found yet.
-    </td>
-</tr>
+        @empty
 
-@endforelse
+            <tr>
+                <td colspan="4" style="text-align:center;padding:20px;color:#94a3b8;">
+                    No log records found yet.
+                </td>
+            </tr>
 
-</tbody>
+        @endforelse
 
-</table>
+        </tbody>
+
+    </table>
 
 </div>
 

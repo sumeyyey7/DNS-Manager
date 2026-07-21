@@ -10,6 +10,15 @@ use App\Services\BindService;
 
 class DnsRecord extends Controller
 {   
+    protected $fillable = [
+    'domain_id',
+    'host',
+    'type',
+    'value',
+    'internal_ip',
+    'external_ip',
+    'ttl',
+];
 
     private $bindService;
 
@@ -104,8 +113,16 @@ class DnsRecord extends Controller
             'host'      => $request->host,
             'type'      => $request->type,
             'value'     => $request->value,
+            'internal_ip' => $request->internal_ip,
+            'external_ip' => $request->external_ip,
             'ttl'       => $request->ttl,
         ]);
+
+        $result = $this->bindService->applyChanges();
+
+        if (!$result['success']) {
+            return back()->with('error', $result['message']);
+        }
 
         // Log oluştur
         $domain = Domain::findOrFail($request->domain_id);
@@ -117,7 +134,7 @@ class DnsRecord extends Controller
             'user'        => session('user')
         ]);
 
-        $this->bindService->generateZoneFiles();
+        
         //$this->bindService->reloadBind();
 
         return redirect('/dns-records');
@@ -142,21 +159,32 @@ class DnsRecord extends Controller
 
         $record->delete();
 
-        $this->bindService->generateZoneFiles();
+        $result = $this->bindService->applyChanges();
+
+        if (!$result['success']) {
+            return back()->with('error', $result['message']);
+        }
         //$this->bindService->reloadBind();
 
         return redirect('/dns-records');
     }
 
     public function edit(int $id)
-    {
-        $record = DnsRecordModel::findOrFail($id);
-
-        return response()->json($record);
+{
+    if (!session('login')) {
+        return redirect('/login');
     }
+
+    $record = DnsRecordModel::findOrFail($id);
+
+    return response()->json($record);
+}
 
     public function update(Request $request, int $id)
     {
+        if (!session('login')) {
+            return redirect('/login');
+        }   
         $record = DnsRecordModel::findOrFail($id);
 
         $request->validate([
@@ -196,6 +224,8 @@ class DnsRecord extends Controller
                     }
                 }
             ]
+            
+            
         ]);
 
         $exists = DnsRecordModel::where('domain_id', $request->domain_id)
@@ -216,8 +246,16 @@ class DnsRecord extends Controller
             'host'      => $request->host,
             'type'      => $request->type,
             'value'     => $request->value,
+            'internal_ip' => $request->internal_ip,
+            'external_ip' => $request->external_ip,
             'ttl'       => $request->ttl,
         ]);
+
+        $result = $this->bindService->applyChanges();
+
+        if (!$result['success']) {
+            return back()->with('error', $result['message']);
+        }
 
         $domain = Domain::findOrFail($request->domain_id);
 
@@ -228,7 +266,7 @@ class DnsRecord extends Controller
             'user'        => session('user')
         ]);
 
-        $this->bindService->generateZoneFiles();
+        
         //$this->bindService->reloadBind();
 
         return redirect('/dns-records');

@@ -7,28 +7,46 @@ use Illuminate\Http\Request;
 class Dnsmanage extends Controller
 {
     public function login()
-    {
-        return view('login');
-    }
+{
+    return view('login');
+}
 
     public function authenticate(Request $request)
     {
-        if (
-            $request->email === "syesilyurt589@gmail.com" &&
-            $request->password === "123456"
-        ) {
+        
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required'
+        ]);
+
+        $mailbox = "{ogrencimail.ibu.edu.tr:993/imap/ssl}INBOX";
+        // $mailbox = "{imap.atauni.edu.tr:993/imap/ssl}INBOX";
+        
+        $imap = @imap_open(
+        $mailbox,
+        $request->email,
+        $request->password
+);
+
+        
+
+        if ($imap) {
+
+            imap_close($imap);
+
             $request->session()->put('login', true);
             $request->session()->put('user', $request->email);
 
             return redirect('/dashboard');
         }
 
-        return back()->with('error', 'Invalid email or password.');
+        return back()
+            ->withInput()
+            ->with('error', 'Invalid email or password.');
     }
 
     public function logout(Request $request)
     {
-        // Flush or forget the session data to properly log out
         $request->session()->forget(['login', 'user']);
         $request->session()->invalidate();
         $request->session()->regenerateToken();

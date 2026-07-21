@@ -10,15 +10,15 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
-        Schema::create('domains', function (Blueprint $table) {
-            $table->id();
-            $table->string('domain_name');
-            $table->text('description')->nullable();
-            $table->timestamps();
-            
-        });
-    }
+{
+    Schema::create('domains', function (Blueprint $table) {
+        $table->id();
+        $table->string('domain_name');
+        $table->text('description')->nullable();
+        $table->enum('status', ['active', 'error'])->default('active');
+        $table->timestamps();
+    });
+}
 
     /**
      * Reverse the migrations.

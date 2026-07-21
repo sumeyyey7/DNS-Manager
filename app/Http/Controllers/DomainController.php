@@ -22,6 +22,7 @@ class DomainController extends Controller
         if (!session('login')) {
             return redirect('/login');
         }
+
         $domains = Domain::all();
 
         return view('domainler', compact('domains'));
@@ -38,20 +39,37 @@ class DomainController extends Controller
         return response()->json($domain);
     }
 
-    // Domain kaydetme işlemi
+    // Domain ekleme
     public function store(Request $request)
     {
         if (!session('login')) {
             return redirect('/login');
         }
+
         $request->validate([
-            'domain_name' => 'required',
+            'domain_name' => 'required|string|max:255|unique:domains,domain_name',
             'description' => 'nullable'
         ]);
 
         $domain = Domain::create([
             'domain_name' => $request->domain_name,
             'description' => $request->description,
+            'status' => 'active'
+        ]);
+
+        $result = $this->bindService->applyChanges();
+
+        if (!$result['success']) {
+
+            $domain->update([
+                'status' => 'error'
+            ]);
+
+            return back()->with('error', $result['message']);
+        }
+
+        $domain->update([
+            'status' => 'active'
         ]);
 
         Log::create([
@@ -61,17 +79,10 @@ class DomainController extends Controller
             'user'        => session('user')
         ]);
 
-        $this->bindService->updateNamedConf();
-        //$this->bindService->reloadBind();
-        $result = $this->bindService->applyChanges();
-
-        if (!$result['success']) {
-            return back()->with('error', $result['message']);
-        }
-
         return redirect('/domains');
     }
 
+    // Domain silme
     public function destroy(int $id)
     {
         if (!session('login')) {
@@ -87,19 +98,14 @@ class DomainController extends Controller
             'user'        => session('user')
         ]);
 
-        // Zone dosyasını sil
         $zoneFile = "/etc/bind/zones/{$domain->domain_name}.db";
 
         if (file_exists($zoneFile)) {
             unlink($zoneFile);
         }
 
-        // Domaini sil
         $domain->delete();
 
-        // zones.conf'u güncelle
-        $this->bindService->updateNamedConf();
-        //$this->bindService->reloadBind();
         $result = $this->bindService->applyChanges();
 
         if (!$result['success']) {
@@ -109,6 +115,7 @@ class DomainController extends Controller
         return redirect('/domains');
     }
 
+    // Domain güncelleme
     public function update(Request $request, int $id)
     {
         if (!session('login')) {
@@ -116,33 +123,47 @@ class DomainController extends Controller
         }
 
         $request->validate([
-            'domain_name' => 'required',
+            'domain_name' => 'required|string|max:255|unique:domains,domain_name,' . $id,
             'description' => 'nullable'
         ]);
 
         $domain = Domain::findOrFail($id);
-        
-        $oldDomainName = $domain->domain_name; // Eski domain adını sakla   
-       
+
+        $oldDomainName = $domain->domain_name;
+
         $domain->update([
             'domain_name' => $request->domain_name,
             'description' => $request->description
         ]);
-        
+
         $oldZoneFile = "/etc/bind/zones/{$oldDomainName}.db";
 
         if ($oldDomainName != $domain->domain_name && file_exists($oldZoneFile)) {
             unlink($oldZoneFile);
-        } // Eski zone dosyasını sil
-        
-        $this->bindService->updateNamedConf();
-        $this->bindService->generateZoneFiles();
-        //$this->bindService->reloadBind();
+        }
+
         $result = $this->bindService->applyChanges();
 
         if (!$result['success']) {
+
+            $domain->update([
+                'status' => 'error'
+            ]);
+
             return back()->with('error', $result['message']);
         }
+
+        $domain->update([
+            'status' => 'active'
+        ]);
+
+        Log::create([
+            'domain_id'   => $domain->id,
+            'domain_name' => $domain->domain_name,
+            'action'      => 'Domain updated',
+            'user'        => session('user')
+        ]);
+
         return redirect('/domains');
     }
 }

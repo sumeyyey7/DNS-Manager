@@ -1,11 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Domains</title>
-     @extends('layouts.app')
+@extends('layouts.app')
 
 @section('content')
 <style>
@@ -82,7 +75,7 @@
     font-weight:500;
 }
 
-.badge-aktif{
+.badge{
     background:#dcfce7;
     color:#15803d;
     padding:4px 10px;
@@ -272,6 +265,16 @@
 .btn-sil-onay:hover { background-color: #b91c1c; transform:translateY(-1px); }
 </style>
 
+@if ($errors->any())
+<div style="background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;padding:15px;border-radius:8px;margin-bottom:20px;">
+    <ul style="margin:0;padding-left:20px;">
+        @foreach ($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
+
 <div class="sayfa-ust">
     <div class="başlık">   
         <h1>Domains</h1>
@@ -300,9 +303,9 @@
         <tbody>
             @foreach($domains as $domain)
             <tr>
-                <td><a href="/domains/{{ $domain->id }}/dns-records" class="domain-link">{{ $domain->domain_name }}</a></td>
-                <td style="font-weight: 600; padding-left: 15px;">{{ $domain->dns_records_count ?? 0 }}</td> 
-                <td><span class="badge-aktif">Active</span></td> 
+                <td><a href="/dns-records?domain_id={{ $domain->id }}" class="domain-link">{{ $domain->domain_name }}</a></td>
+                <td style="font-weight: 600; padding-left: 15px;">{{ $domain->dnsRecords->count() }}</td> 
+                <td>@if($domain->status == 'active')<span class="badge bg-success">Aktif</span>@else<span class="badge bg-danger">Hatalı</span>@endif</td> 
                 <td>{{ $domain->created_at ? $domain->created_at->format('d.m.Y H:i') : '' }}</td>
                 <td>{{ $domain->description }}</td>
                 <td>
@@ -414,7 +417,10 @@
         if (event.target == modal) modalKapat();
         if (event.target == silModal) silmeOnayiniKapat();
     }
+    @if ($errors->any())
+        window.onload = function () {
+        document.getElementById("modal").style.display = "block";
+    };
+@endif
 </script>
 @endsection
-</body>
-</html>

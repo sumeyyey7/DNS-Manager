@@ -8,7 +8,6 @@ class BindService
 {
     public function updateNamedConf()
     {
-        
         $domains = Domain::all();
 
         $content = "";
@@ -26,6 +25,16 @@ class BindService
 
     public function generateZoneFiles()
     {
+        // Önce eski zone dosyalarını sil
+        $files = glob('/etc/bind/zones/*.db');
+
+        foreach ($files as $file) {
+            if (is_file($file)) {
+                unlink($file);
+            }
+        }
+
+        // Güncel domainleri al
         $domains = Domain::with('dnsRecords')->get();
 
         foreach ($domains as $domain) {
@@ -60,65 +69,73 @@ class BindService
             );
         }
     }
+
     public function reloadBind()
-{
-    exec('sudo rndc reload 2>&1', $output, $result);
+    {
+        exec('sudo rndc reload 2>&1', $output, $result);
 
-    return [
-        'success' => $result === 0,
-        'message' => implode("\n", $output)
-    ];
-}
+        return [
+            'success' => $result === 0,
+            'message' => implode("\n", $output)
+        ];
+    }
+
     public function checkNamedConf()
-{
-    exec('sudo named-checkconf 2>&1', $output, $result);
+    {
+        exec('sudo named-checkconf 2>&1', $output, $result);
 
-    return [
-        'success' => $result === 0,
-        'message' => implode("\n", $output)
-    ];
-}
+        return [
+            'success' => $result === 0,
+            'message' => implode("\n", $output)
+        ];
+    }
+
     public function checkAllZones()
-{
-    $domains = Domain::all();
+    {
+        $domains = Domain::all();
 
-    foreach ($domains as $domain) {
+        foreach ($domains as $domain) {
 
-        $output = [];
+            $output = [];
 
-        exec(
-            "sudo named-checkzone {$domain->domain_name} /etc/bind/zones/{$domain->domain_name}.db 2>&1",
-            $output,
-            $result
-        );
+            exec(
+                "sudo named-checkzone {$domain->domain_name} /etc/bind/zones/{$domain->domain_name}.db 2>&1",
+                $output,
+                $result
+            );
 
-        if ($result !== 0) {
-            return [
-                'success' => false,
-                'message' => implode("\n", $output)
-            ];
+            if ($result !== 0) {
+                return [
+                    'success' => false,
+                    'message' => implode("\n", $output)
+                ];
+            }
         }
+
+        return [
+            'success' => true,
+            'message' => 'Tüm zone dosyaları doğrulandı.'
+        ];
     }
 
-    return [
-        'success' => true,
-        'message' => 'Tüm zone dosyaları doğrulandı.'
-    ];
-}
     public function applyChanges()
-{
-    $conf = $this->checkNamedConf();
+    {
+        $this->updateNamedConf();
 
-    if (!$conf['success']) {
-        return $conf;
+        $this->generateZoneFiles();
+
+        $conf = $this->checkNamedConf();
+
+        if (!$conf['success']) {
+            return $conf;
+        }
+
+        $zones = $this->checkAllZones();
+
+        if (!$zones['success']) {
+            return $zones;
+        }
+
+        return $this->reloadBind();
     }
-
-    $zones = $this->checkAllZones();
-
-    if (!$zones['success']) {
-        return $zones;
-    }
-
-    return $this->reloadBind();
-}
 }
