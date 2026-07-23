@@ -294,8 +294,7 @@
 
 <div class="sayfa-ust">
     <div class="başlık">
-        <h1>DNS Records - {{ $records->first()->domain->domain_name ?? 'Domain' }}</h1>
-        
+        <h1>DNS Records </h1>
     </div>
     <div class="buton-grubu">
         <a href="/domains" class="btn-geri"><i class="fa-solid fa-arrow-left"></i> Back to Domains</a>
@@ -307,36 +306,40 @@
     <table class="table">
         <thead>
             <tr>
+                <th>Domain</th>
                 <th>Type</th>
                 <th>Host</th>
                 <th>Value</th>
                 <th>Internal IP</th>
                 <th>External IP</th>
                 <th>TTL</th>
+                <!-- GERİ EKLENDİ: İşlem başlığı -->
                 <th style="text-align: right; padding-right: 15px;">Actions</th>
             </tr>
         </thead>
         <tbody>
             @foreach($records as $record)
-                <tr>
-                    <td style="font-weight: 600; color: #0f172a;">{{ $record->type }}</td>
-                    <td>{{ $record->host }}</td>
-                    <td style="color: #475569;">{{ $record->value }}</td>
-                    <td>{{ $record->internal_ip ?? '-' }}</td>
-                    <td>{{ $record->external_ip ?? '-' }}</td>
-                    <td>{{ $record->ttl }}</td>
-                    <td>
-                        <div class="islem-butonlari" style="padding-right: 15px;">
-                            <i class="fa-regular fa-pen-to-square" title="Edit" onclick="kayitDuzenle({{ json_encode($record) }})"></i>
-                            <i class="fa-regular fa-trash-can" title="Delete" onclick="silmeOnayiniAc({{ $record->id }})"></i>
+            <tr>
+                <td style="font-weight: 600; color: #2563eb;">{{ $record->domain->domain_name ?? '-' }}</td>
+                <td style="font-weight: 600; color: #0f172a;">{{ $record->type }}</td>
+                <td>{{ $record->host }}</td>
+                <td>{{ $record->value ?? '-' }}</td>
+                <td>{{ $record->internal_ip ?? '-' }}</td>
+                <td>{{ $record->external_ip ?? '-' }}</td>
+                <td>{{ $record->ttl }}</td>
+                <td>
+                    <!-- GERİ EKLENDİ: İşlem butonları ve gizli silme formu -->
+                    <div class="islem-butonlari" style="padding-right: 15px;">
+                        <i class="fa-regular fa-pen-to-square" title="Edit" onclick="kayitDuzenle({{ json_encode($record) }})"></i>
+                        <i class="fa-regular fa-trash-can" title="Delete" onclick="silmeOnayiniAc({{ $record->id }})"></i>
 
-                            <form id="sil-formu-{{ $record->id }}" action="/dns-records/{{ $record->id }}" method="POST" style="display: none;">
-                                @csrf
-                                @method('DELETE')
-                            </form>
-                        </div>
-                    </td>
-                </tr>
+                        <form id="sil-formu-{{ $record->id }}" action="/dns-records/{{ $record->id }}" method="POST" style="display: none;">
+                            @csrf
+                            @method('DELETE')
+                        </form>
+                    </div>
+                </td>
+            </tr>
             @endforeach
         </tbody>
     </table>
@@ -388,19 +391,19 @@
                 <input type="text" name="host" id="form_host" value="{{ old('host') }}" placeholder="e.g. @ or www" autocomplete="off" required>
             </div>
 
-            <div class="form-grup">
+            <div class="form-grup" id="valueGroup">
                 <label>Value</label>
-                <input type="text" name="value" id="form_value" value="{{ old('value') }}" placeholder="e.g. 192.168.1.10" autocomplete="off" required>
+                <input type="text" name="value" id="form_value" value="{{ old('value') }}" placeholder="e.g. 192.168.1.10" autocomplete="off">
             </div>
 
             <div class="form-grup">
                 <label>Internal IP</label>
-                <input type="text"name="internal_ip"id="form_internal_ip"value="{{ old('internal_ip') }}"placeholder="192.168.1.10"autocomplete="off">
+                <input type="text" name="internal_ip" id="form_internal_ip" value="{{ old('internal_ip') }}" placeholder="192.168.1.10" autocomplete="off">
             </div>
 
             <div class="form-grup">
                 <label>External IP</label>
-                <input type="text"name="external_ip"id="form_external_ip"value="{{ old('external_ip') }}"placeholder="85.105.10.25"autocomplete="off">
+                <input type="text" name="external_ip" id="form_external_ip" value="{{ old('external_ip') }}" placeholder="85.105.10.25" autocomplete="off">
             </div>
 
             <div class="form-grup">
@@ -443,7 +446,6 @@
         updateForm();
     }
 
-    // Düzenleme modunda da formun temiz kalması ve geçmişi önermemesi için autocomplete özellikleri korundu
     function kayitDuzenle(record) {
         document.getElementById('modalBaslik').innerText = "Edit Record";
         document.getElementById('dnsForm').action = "/dns-records/" + record.id;
@@ -499,65 +501,94 @@
     const hostInput = document.getElementById('form_host');
     const internalIpInput = document.getElementById('form_internal_ip');
     const externalIpInput = document.getElementById('form_external_ip');
-
+    const valueGroup = document.getElementById('valueGroup');
     typeSelect.addEventListener('change', updateForm);
 
     function updateForm() {
+        if (typeSelect.value === 'A' || typeSelect.value === 'AAAA') {
+            valueGroup.style.display = "none";
+            valueInput.value = "";
+        } else {
+            valueGroup.style.display = "block";
+        }
 
-    switch (typeSelect.value) {
+        switch (typeSelect.value) {
+            case 'A':
+                valueInput.placeholder = "";
+                hostInput.placeholder = "www";
+                internalIpInput.placeholder = "192.168.1.10";
+                externalIpInput.placeholder = "85.105.10.25";
+                break;
 
-        case 'A':
-            valueInput.placeholder = "192.168.1.10";
-            hostInput.placeholder = "www";
-            internalIpInput.placeholder = "192.168.1.10";
-            externalIpInput.placeholder = "85.105.10.25";
-            break;
+            case 'AAAA':
+                valueInput.placeholder = "";
+                hostInput.placeholder = "www";
+                internalIpInput.placeholder = "2001:db8::10";
+                externalIpInput.placeholder = "2001:db8::25";
+                break;
 
-        case 'AAAA':
-            valueInput.placeholder = "2001:db8::1";
-            hostInput.placeholder = "www";
-            internalIpInput.placeholder = "2001:db8::10";
-            externalIpInput.placeholder = "2001:db8::25";
-            break;
+            case 'CNAME':
+                valueInput.placeholder = "server.example.com";
+                hostInput.placeholder = "www";
+                internalIpInput.placeholder = "-";
+                externalIpInput.placeholder = "-";
+                break;
 
-        case 'CNAME':
-            valueInput.placeholder = "server.example.com";
-            hostInput.placeholder = "www";
-            internalIpInput.placeholder = "-";
-            externalIpInput.placeholder = "-";
-            break;
+            case 'MX':
+                valueInput.placeholder = "mail.example.com";
+                hostInput.placeholder = "@";
+                internalIpInput.placeholder = "-";
+                externalIpInput.placeholder = "-";
+                break;
 
-        case 'MX':
-            valueInput.placeholder = "mail.example.com";
-            hostInput.placeholder = "@";
-            internalIpInput.placeholder = "-";
-            externalIpInput.placeholder = "-";
-            break;
+            case 'NS':
+                valueInput.placeholder = "ns1.example.com";
+                hostInput.placeholder = "@";
+                internalIpInput.placeholder = "192.168.1.2";
+                externalIpInput.placeholder = "85.105.10.2";
+                break;
 
-        case 'NS':
-            valueInput.placeholder = "ns1.example.com";
-            hostInput.placeholder = "@";
-            internalIpInput.placeholder = "192.168.1.2";
-            externalIpInput.placeholder = "85.105.10.2";
-            break;
+            case 'TXT':
+                valueInput.placeholder = "v=spf1 ~all";
+                hostInput.placeholder = "@";
+                internalIpInput.placeholder = "-";
+                externalIpInput.placeholder = "-";
+                break;
 
-        case 'TXT':
-            valueInput.placeholder = "v=spf1 ~all";
-            hostInput.placeholder = "@";
-            internalIpInput.placeholder = "-";
-            externalIpInput.placeholder = "-";
-            break;
-
-        default:
-            valueInput.placeholder = "";
-            hostInput.placeholder = "";
-            internalIpInput.placeholder = "";
-            externalIpInput.placeholder = "";
+            default:
+                valueInput.placeholder = "";
+                hostInput.placeholder = "";
+                internalIpInput.placeholder = "";
+                externalIpInput.placeholder = "";
+        }
     }
 
-}
-
     updateForm();
+
+    internalIpInput.addEventListener("blur", function () {
+        if (typeSelect.value !== "A" && typeSelect.value !== "AAAA") {
+            return;
+        }
+
+        fetch("/nat-search", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": document
+                    .querySelector('meta[name="csrf-token"]')
+                    .getAttribute("content")
+            },
+            body: JSON.stringify({
+                internal_ip: internalIpInput.value
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.external_ip !== "") {
+                externalIpInput.value = data.external_ip;
+            }
+        });
+    });
 </script>
 
 @endsection

@@ -7,6 +7,7 @@ use App\Http\Controllers\DomainController;
 use App\Http\Controllers\DnsRecord;
 use App\Http\Controllers\LogController;
 
+
 // Authentication
 Route::get('/login', [Dnsmanage::class, 'login']);
 Route::post('/login', [Dnsmanage::class, 'authenticate']);
@@ -36,3 +37,11 @@ Route::get('/logs', [LogController::class, 'index']);
 
 //Test
 Route::get('/test-record', [Dashboard::class, 'testRecord']);
+
+Route::get('/reload-test', function () {});
+
+Route::get('/upload-test', function () {});
+
+Route::post('/nat-search', [DnsRecord::class, 'findNatIp']);
+
+

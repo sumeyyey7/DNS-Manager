@@ -7,6 +7,7 @@ use App\Models\DnsRecord as DnsRecordModel;
 use App\Models\Domain;
 use App\Models\Log;
 use App\Services\BindService;
+use Illuminate\Support\Facades\Storage;
 
 class DnsRecord extends Controller
 {   
@@ -64,36 +65,34 @@ class DnsRecord extends Controller
             'host'      => ['required', 'regex:/^(@|[a-zA-Z0-9]([a-zA-Z0-9-\.]*[a-zA-Z0-9])?)$/'],
             'type'      => 'required|in:A,AAAA,CNAME,MX,NS,TXT',
             'ttl'       => 'required|integer|min:1',
-            'value'     => ['required', function ($attribute, $value, $fail) use ($request) {
+            'value' => [
+    function ($attribute, $value, $fail) use ($request) {
 
-                    switch ($request->type) {
+        if (in_array($request->type, ['A', 'AAAA'])) {
+            return;
+        }
 
-                        case 'A':
-                            if (!filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-                                $fail('Please enter a valid IPv4 address.');
-                            }
-                            break;
+        if (empty($value)) {
+            $fail('The value field is required.');
+            return;
+        }
 
-                        case 'AAAA':
-                            if (!filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-                                $fail('Please enter a valid IPv6 address.');
-                            }
-                            break;
+        switch ($request->type) {
 
-                        case 'CNAME':
-                        case 'MX':
-                        case 'NS':
-                            if (!filter_var($value, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)) {
-                                $fail('Please enter a valid domain name.');
-                            }
-                            break;
+            case 'CNAME':
+            case 'MX':
+            case 'NS':
 
-                        case 'TXT':
-                            // TXT kayıtlarında ek kontrol yok
-                            break;
-                    }
+                if (!filter_var($value, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)) {
+                    $fail('Please enter a valid domain name.');
                 }
-            ]
+                break;
+
+            case 'TXT':
+                break;
+        }
+    }
+],
         ]);
 
         $exists = DnsRecordModel::where('domain_id', $request->domain_id)
@@ -107,16 +106,43 @@ class DnsRecord extends Controller
                 ->withErrors(['value' => 'This DNS record already exists.'])
                 ->withInput();
         }
+            
+        $externalIp = $request->external_ip;
+
+if (in_array($request->type, ['A', 'AAAA'])) {
+
+    $natList = Storage::get('nat.txt');
+
+    $lines = explode("\n", $natList);
+
+    foreach ($lines as $line) {
+
+        $line = trim($line);
+
+        if ($line == '') {
+            continue;
+        }
+
+        list($internal, $external) = explode('=', $line);
+
+        if (trim($internal) == trim($request->internal_ip)) {
+
+            $externalIp = trim($external);
+
+            break;
+        }
+    }
+}
 
         DnsRecordModel::create([
-            'domain_id' => $request->domain_id,
-            'host'      => $request->host,
-            'type'      => $request->type,
-            'value'     => $request->value,
-            'internal_ip' => $request->internal_ip,
-            'external_ip' => $request->external_ip,
-            'ttl'       => $request->ttl,
-        ]);
+    'domain_id'   => $request->domain_id,
+    'host'        => $request->host,
+    'type'        => $request->type,
+    'value'       => in_array($request->type, ['A','AAAA']) ? '' : $request->value,
+    'internal_ip' => $request->internal_ip,
+    'external_ip' => $externalIp,
+    'ttl'         => $request->ttl,
+]);
 
         $result = $this->bindService->applyChanges();
 
@@ -138,6 +164,7 @@ class DnsRecord extends Controller
         //$this->bindService->reloadBind();
 
         return redirect('/dns-records');
+       
     }
 
     // DNS kaydı sil
@@ -193,22 +220,22 @@ class DnsRecord extends Controller
             'type'      => 'required|in:A,AAAA,CNAME,MX,NS,TXT',
             'ttl'       => 'required|integer|min:1',
             'value'     => [
-                'required',
+                
                 function ($attribute, $value, $fail) use ($request) {
 
                     switch ($request->type) {
 
                         case 'A':
-                            if (!filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-                                $fail('Please enter a valid IPv4 address.');
-                            }
-                            break;
+    if (!filter_var($request->internal_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+        $fail('Please enter a valid Internal IPv4 address.');
+    }
+    break;
 
-                        case 'AAAA':
-                            if (!filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-                                $fail('Please enter a valid IPv6 address.');
-                            }
-                            break;
+case 'AAAA':
+    if (!filter_var($request->internal_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+        $fail('Please enter a valid Internal IPv6 address.');
+    }
+    break;
 
                         case 'CNAME':
                         case 'MX':
@@ -227,6 +254,7 @@ class DnsRecord extends Controller
             
             
         ]);
+        
 
         $exists = DnsRecordModel::where('domain_id', $request->domain_id)
             ->where('host', $request->host)
@@ -245,7 +273,7 @@ class DnsRecord extends Controller
             'domain_id' => $request->domain_id,
             'host'      => $request->host,
             'type'      => $request->type,
-            'value'     => $request->value,
+            'value' => in_array($request->type, ['A', 'AAAA'])? "": $request->value,
             'internal_ip' => $request->internal_ip,
             'external_ip' => $request->external_ip,
             'ttl'       => $request->ttl,
@@ -271,4 +299,34 @@ class DnsRecord extends Controller
 
         return redirect('/dns-records');
     }
+    public function findNatIp(Request $request)
+{
+    $externalIp = "";
+
+    if (Storage::exists('nat.txt')) {
+
+        $lines = file(storage_path('app/nat.txt'));
+
+        foreach ($lines as $line) {
+
+            $line = trim($line);
+
+            if ($line == '') {
+                continue;
+            }
+
+            list($internal, $external) = explode('=', $line);
+
+            if (trim($internal) == trim($request->internal_ip)) {
+
+                $externalIp = trim($external);
+                break;
+            }
+        }
+    }
+
+    return response()->json([
+        'external_ip' => $externalIp
+    ]);
+}
 }

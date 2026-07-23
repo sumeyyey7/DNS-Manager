@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Domain;
+use App\Services\ExternalBindService;
 
 class BindService
 {
@@ -52,15 +53,23 @@ class BindService
 
             $content .= "@ IN NS ns1.{$domain->domain_name}." . PHP_EOL;
             $content .= "ns1 IN A 127.0.0.1" . PHP_EOL;
-
+            
+            
             foreach ($domain->dnsRecords as $record) {
+            
+            $value = $record->value;
 
-                $content .= sprintf(
-                    "%-15s IN %-6s %s\n",
-                    $record->host,
-                    $record->type,
-                    $record->value
-                );
+            if ($record->type === 'A' && !empty($record->internal_ip)) {
+                $value = $record->internal_ip;
+            }
+            
+            $content .= sprintf(
+            "%-15s IN %-6s %s\n",
+            $record->host,
+            $record->type,
+            $value
+            );
+
             }
 
             file_put_contents(
@@ -119,23 +128,61 @@ class BindService
     }
 
     public function applyChanges()
-    {
-        $this->updateNamedConf();
+{
+    $this->updateNamedConf();
 
-        $this->generateZoneFiles();
+    $this->generateZoneFiles();
 
-        $conf = $this->checkNamedConf();
+    $conf = $this->checkNamedConf();
 
-        if (!$conf['success']) {
-            return $conf;
-        }
-
-        $zones = $this->checkAllZones();
-
-        if (!$zones['success']) {
-            return $zones;
-        }
-
-        return $this->reloadBind();
+    if (!$conf['success']) {
+        return $conf;
     }
+
+    $zones = $this->checkAllZones();
+
+    if (!$zones['success']) {
+        return $zones;
+    }
+
+    $local = $this->reloadBind();
+
+    if (!$local['success']) {
+        return $local;
+    }
+
+    $external = new ExternalBindService();
+
+    $upload = $external->uploadZoneFiles();
+
+    if (!$upload['success']) {
+        return [
+            'success' => false,
+            'message' => 'VM dosya aktarımı başarısız.' . PHP_EOL . $upload['message']
+        ];
+    }
+
+    $check = $external->checkNamedConf();
+
+    if (!$check['success']) {
+        return [
+            'success' => false,
+            'message' => 'VM named-checkconf hatası.' . PHP_EOL . $check['message']
+        ];
+    }
+
+    $reload = $external->reloadBind();
+
+    if (!$reload['success']) {
+        return [
+            'success' => false,
+            'message' => 'VM rndc reload hatası.' . PHP_EOL . $reload['message']
+        ];
+    }
+
+    return [
+        'success' => true,
+        'message' => 'Yerel ve harici DNS sunucuları başarıyla güncellendi.'
+    ];
+}
 }
