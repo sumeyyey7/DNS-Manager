@@ -6,7 +6,7 @@ use App\Http\Controllers\Dnsmanage;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\DnsRecord;
 use App\Http\Controllers\LogController;
-
+use App\Http\Controllers\ServerController;
 
 // Authentication
 Route::get('/login', [Dnsmanage::class, 'login']);
@@ -44,4 +44,8 @@ Route::get('/upload-test', function () {});
 
 Route::post('/nat-search', [DnsRecord::class, 'findNatIp']);
 
-
+Route::get('/servers', [ServerController::class, 'index']);
+Route::post('/servers', [ServerController::class, 'store']);
+Route::get('/servers/{id}/edit', [ServerController::class, 'edit']);
+Route::put('/servers/{id}', [ServerController::class, 'update']);
+Route::delete('/servers/{id}', [ServerController::class, 'destroy']);

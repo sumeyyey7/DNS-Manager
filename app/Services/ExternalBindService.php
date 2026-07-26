@@ -2,150 +2,172 @@
 
 namespace App\Services;
 
+use App\Models\Server;
+use Illuminate\Database\Eloquent\Collection;
+
 class ExternalBindService
 {
-    private string $host = "192.168.56.101";
-    private string $user = "sumeeye";
-    private string $password = "Ubuntu/200800";
+
+    private Collection $servers;
+
+public function __construct()
+{
+    $this->servers = Server::where('type', 'external')->get();
+
+    if ($this->servers->isEmpty()) {
+        throw new \Exception('No external servers found.');
+    }
+}
 
     /**
      * VM üzerinde komut çalıştırır.
      */
-    private function run(string $command): array
-    {
-        $output = [];
-        $result = 0;
+    private function run(Server $server, string $command): array
+{
+    $output = [];
+    $result = 0;
 
-        $cmd =
-            "sshpass -p '{$this->password}' " .
-            "ssh -o StrictHostKeyChecking=no {$this->user}@{$this->host} " .
-            escapeshellarg($command) .
-            " 2>&1";
+    $cmd =
+        "sshpass -p '{$server->password}' " .
+        "ssh -o StrictHostKeyChecking=no {$server->username}@{$server->ip} " .
+        escapeshellarg($command) .
+        " 2>&1";
 
-        exec($cmd, $output, $result);
+    exec($cmd, $output, $result);
 
-        return [
-            'success' => $result === 0,
-            'code'    => $result,
-            'message' => implode("\n", $output),
-            'command' => $cmd,
+    return [
+        'success' => $result === 0,
+        'code'    => $result,
+        'message' => implode("\n", $output),
+        'command' => $cmd,
+    ];
+}
+
+    public function testConnection(): array
+{
+    $results = [];
+
+    foreach ($this->servers as $server) {
+        $results[] = [
+            'server' => $server->name,
+            'result' => $this->run($server, 'hostname')
         ];
     }
 
-    public function testConnection()
-    {
-        return $this->run("hostname");
+    return $results;
+}
+
+    public function reloadBind(): array
+{
+    $results = [];
+
+    foreach ($this->servers as $server) {
+        $results[] = [
+            'server' => $server->name,
+            'result' => $this->run($server, 'sudo rndc reload')
+        ];
     }
 
-    public function reloadBind()
-    {
-        return $this->run("sudo rndc reload");
+    return $results;
+}
+
+    public function checkNamedConf(): array
+{
+    $results = [];
+
+    foreach ($this->servers as $server) {
+        $results[] = [
+            'server' => $server->name,
+            'result' => $this->run($server, 'sudo named-checkconf')
+        ];
     }
 
-    public function checkNamedConf()
-    {
-        return $this->run("sudo named-checkconf");
-    }
+    return $results;
+}
 
     public function uploadZoneFiles()
-{
-    $path = storage_path('app/external-zones');
+    {
+        $sourcePath = "/etc/bind/zones";
+        $tempPath = storage_path("app/upload-zones");
 
-    if (!is_dir($path)) {
-        mkdir($path, 0777, true);
-    }
-
-    foreach (glob($path . '/*.db') as $file) {
-        unlink($file);
-    }
-
-    $domains = \App\Models\Domain::with('dnsRecords')->get();
-
-    $zonesConf = "";
-
-    foreach ($domains as $domain) {
-
-        $serial = date('Ymd') . '01';
-
-        $content = '$TTL 604800' . PHP_EOL . PHP_EOL;
-
-        $content .= "@ IN SOA ns1.{$domain->domain_name}. admin.{$domain->domain_name}. (" . PHP_EOL;
-        $content .= "    {$serial}" . PHP_EOL;
-        $content .= "    604800" . PHP_EOL;
-        $content .= "    86400" . PHP_EOL;
-        $content .= "    2419200" . PHP_EOL;
-        $content .= "    604800 )" . PHP_EOL . PHP_EOL;
-
-        $content .= "@ IN NS ns1.{$domain->domain_name}." . PHP_EOL;
-        $content .= "ns1 IN A 127.0.0.1" . PHP_EOL;
-
-        foreach ($domain->dnsRecords as $record) {
-
-            $value = $record->value;
-
-            if ($record->type === 'A' && !empty($record->external_ip)) {
-                $value = $record->external_ip;
-            }
-
-            $content .= sprintf(
-                "%-15s IN %-6s %s\n",
-                $record->host,
-                $record->type,
-                $value
-            );
+        if (!is_dir($tempPath)) {
+            mkdir($tempPath, 0777, true);
         }
 
-        file_put_contents(
-            "{$path}/{$domain->domain_name}.db",
-            $content
-        );
+        // Yerel geçici klasörü temizle
+        foreach (glob($tempPath . "/*") as $file) {
+            if (is_file($file)) {
+                unlink($file);
+            }
+        }
 
-        $zonesConf .= 'zone "' . $domain->domain_name . "\" {\n";
-        $zonesConf .= "    type master;\n";
-        $zonesConf .= '    file "/etc/bind/zones/' . $domain->domain_name . ".db\";\n";
-        $zonesConf .= "};\n\n";
-    }
+        // Zone dosyalarını kopyala
+        foreach (glob($sourcePath . "/*") as $file) {
+            if (is_file($file)) {
+                copy($file, $tempPath . "/" . basename($file));
+            }
+        }
 
-    file_put_contents("{$path}/zones.conf", $zonesConf);
+        if (file_exists("/etc/bind/zones.conf")) {
+            copy("/etc/bind/zones.conf", $tempPath . "/zones.conf");
+        }
 
-    $output = [];
-    $result = 0;
+        $results = [];
 
-    $cmd =
-        "sshpass -p '{$this->password}' scp -o StrictHostKeyChecking=no " .
-        "{$path}/*.db " .
-        "{$this->user}@{$this->host}:/tmp/ 2>&1";
+foreach ($this->servers as $server) {
 
-    exec($cmd, $output, $result);
-
-    if ($result !== 0) {
-        return [
-            'success' => false,
-            'message' => implode("\n", $output),
-        ];
-    }
+    $this->run($server, "rm -rf /tmp/bind_upload && mkdir -p /tmp/bind_upload");
 
     $output = [];
     $result = 0;
 
     $cmd =
-        "sshpass -p '{$this->password}' scp -o StrictHostKeyChecking=no " .
-        "{$path}/zones.conf " .
-        "{$this->user}@{$this->host}:/tmp/ 2>&1";
+        "sshpass -p '{$server->password}' scp -o StrictHostKeyChecking=no -r " .
+        $tempPath . "/* " .
+        "{$server->username}@{$server->ip}:/tmp/bind_upload/ 2>&1";
 
     exec($cmd, $output, $result);
 
     if ($result !== 0) {
-        return [
+
+        $results[] = [
+            'server' => $server->name,
             'success' => false,
-            'message' => implode("\n", $output),
+            'message' => implode("\n", $output)
         ];
+
+        continue;
     }
 
-    return $this->run("
-        sudo mkdir -p /etc/bind/zones &&
-        sudo cp /tmp/*.db /etc/bind/zones/ &&
-        sudo cp /tmp/zones.conf /etc/bind/zones.conf
-    ");
+    $results[] = [
+        'server' => $server->name,
+        'result' => $this->run($server, "
+            sudo mkdir -p /etc/bind/zones &&
+            sudo rm -f /etc/bind/zones/* &&
+            sudo cp /tmp/bind_upload/*.db /etc/bind/zones/ 2>/dev/null;
+            sudo cp /tmp/bind_upload/zones.conf /etc/bind/zones.conf 2>/dev/null;
+            sudo grep -q 'include \"/etc/bind/zones.conf\";' /etc/bind/named.conf.local || echo 'include \"/etc/bind/zones.conf\";' | sudo tee -a /etc/bind/named.conf.local;
+            sudo chown -R bind:bind /etc/bind/zones /etc/bind/zones.conf /etc/bind/named.conf.local;
+            sudo chmod 644 /etc/bind/zones/* /etc/bind/zones.conf
+        ")
+    ];
+}
+
+return $results;
+
+        
+    }
+    public function getServerStatus(): array
+{
+    $statuses = [];
+
+    foreach ($this->servers as $server) {
+
+        $result = $this->run($server, "hostname");
+
+        $statuses[$server->id] = $result['success'];
+    }
+
+    return $statuses;
 }
 }

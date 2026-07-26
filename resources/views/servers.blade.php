@@ -21,7 +21,7 @@
     font-size:14px;
 }
 
-/* Yeni Domain Butonu */
+/* Yeni Sunucu Butonu */
 .btn-ekle{
     display:flex;
     align-items:center;
@@ -69,19 +69,10 @@
     color:#334155;
 }
 
-.domain-link{
+.server-link{
     color:#2563eb;
     text-decoration:none;
     font-weight:500;
-}
-
-.badge{
-    background:#dcfce7;
-    color:#15803d;
-    padding:4px 10px;
-    border-radius:6px;
-    font-size:13px;
-    font-weight:600;
 }
 
 .islem-butonlari{
@@ -127,7 +118,7 @@
     animation: modalAcilis 0.25s ease-out;
 }
 
-/* ŞIK SİLME MODALI ÖZEL CSS */
+/* SİLME MODALI CSS */
 .sil-modal-kutu {
     background-color: #ffffff;
     padding: 30px;
@@ -180,6 +171,7 @@
 }
 
 .modal-icerik input,
+.modal-icerik select,
 .modal-icerik textarea{
     width:100%;
     padding:12px;
@@ -189,17 +181,14 @@
     font-size:14px;
     outline:none;
     transition:.2s;
+    background-color: #fff;
 }
 
 .modal-icerik input:focus,
+.modal-icerik select:focus,
 .modal-icerik textarea:focus{
     border-color:#2563eb;
     box-shadow:0 0 0 3px rgba(37,99,235,.15);
-}
-
-.modal-icerik textarea{
-    resize:none;
-    height:90px;
 }
 
 /* Butonlar */
@@ -262,6 +251,7 @@
     font-size: 14px;
     transition: .2s;
 }
+
 .btn-sil-onay:hover { background-color: #b91c1c; transform:translateY(-1px); }
 </style>
 
@@ -277,13 +267,13 @@
 
 <div class="sayfa-ust">
     <div class="başlık">   
-        <h1>Domains</h1>
-        <p>Manage all your domains</p>
+        <h1>Servers</h1>
+        <p>Manage all your DNS servers</p>
     </div>
         
     <div class="ekleme">  
         <button type="button" class="btn-ekle" onclick="modalAc()">
-            <i class="fa-solid fa-plus"></i> Add New Domain
+            <i class="fa-solid fa-plus"></i> Add New Server
         </button>
     </div>
 </div>
@@ -292,31 +282,36 @@
     <table class="table">
         <thead>
             <tr>
-                <th>Domain</th>
-                <th>Record Count</th>
-                <th>Created At</th>
-                <th>Description</th>
+                <th>ID</th>
+                <th>Server Name</th>
+                <th>Type</th>
+                <th>IP Address</th>
+                <th>Username</th>
+                <th>Status</th>
                 <th style="text-align: right; padding-right: 15px;">Actions</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($domains as $domain)
+            @foreach($servers as $server)
             <tr>
-                <td><a href="/dns-records?domain_id={{ $domain->id }}" class="domain-link">{{ $domain->domain_name }}</a></td>
-                <td style="font-weight: 600; padding-left: 15px;">{{ $domain->dnsRecords->count() }}</td> 
-                <td>{{ $domain->created_at ? $domain->created_at->format('d.m.Y H:i') : '' }}</td>
-                <td>{{ $domain->description }}</td>
+                <td>{{ $server->id }}</td>
+                <td><a href="/servers/{{ $server->id }}" class="server-link">{{ $server->name }}</a></td>
+                <td>@if($server->type == 'internal')Internal @else External @endif</td>
+                <td style="font-weight: 500;">{{ $server->ip}}</td>
+                <td>{{ $server->username }}</td>
+                <td>
+                    @if($server->type == 'internal')
+                        <span class="badge bg-primary">Local</span>
+                    @elseif(isset($statuses[$server->id]) && $statuses[$server->id])
+                        <span class="badge bg-success">Online</span>
+                    @else
+                        <span class="badge bg-danger">Offline</span>
+                    @endif
+                </td>
                 <td>
                     <div class="islem-butonlari" style="justify-content: flex-end; padding-right:15px;">
-                       
-                       <i class="fa-regular fa-pen-to-square" title="Edit" onclick="duzenle({{ $domain->id }})"></i>
-
-                       <i class="fa-regular fa-trash-can" title="Delete" onclick="silmeOnayiniAc({{ $domain->id }})"></i>
-
-                       <form id="sil-formu-{{ $domain->id }}" action="/domains/{{ $domain->id }}" method="POST" style="display:none;">
-                            @csrf
-                            @method('DELETE')
-                       </form>
+                       <i class="fa-regular fa-pen-to-square" title="Edit" onclick="duzenle({{ $server->id }})"></i>
+                       <i class="fa-regular fa-trash-can" title="Delete" onclick="silmeOnayiniAc({{ $server->id }})"></i>
                     </div>
                 </td>
             </tr>
@@ -325,19 +320,35 @@
     </table>
 </div>
 
+<!-- SUNUCU EKLE/DÜZENLE MODAL -->
 <div id="modal" class="modal">
     <div class="modal-icerik">
-        <h2 id="modalTitle">Add New Domain</h2>
-        <form id="domainForm" action="/domains" method="POST" autocomplete="off">
+        <h2 id="modalTitle">Add New Server</h2>
+        
+        <!-- novalidate tarayıcının varsayılan balon uyarısını kapatır -->
+        <form id="serverForm" action="/servers" method="POST" autocomplete="off" novalidate>
             @csrf
             <div id="methodAlani"></div>
 
-            <label>Domain Name</label>
-            <input id="domain_name" type="text" name="domain_name" autocomplete="off">
+            <label>Server Name</label>
+            <input id="name" type="text" name="name"  required>
 
-            <label>Description</label>
-            <textarea id="description" name="description" autocomplete="off"></textarea>
-            
+            <label>Server Type</label>
+            <select id="type" name="type" required>
+                <option value="internal">Internal</option>
+                <option value="external">External</option>
+            </select>
+
+            <label>IP Address</label>
+            <input id="ip_address" type="text" name="ip_address" placeholder="192.168.56.101" spellcheck="false" autocorrect="off" autocapitalize="off" required>
+
+            <label>SSH Username</label>
+            <!-- autocomplete="off" ve role="presentation" eklenerek Parolayı Yönet uyarısı engellendi -->
+           <input id="username" type="text" name="username" autocomplete="new-password" spellcheck="false" autocorrect="off" autocapitalize="off" required>
+
+            <label>SSH Password</label>
+            <input id="password" type="password" name="password" autocomplete="new-password">
+
             <div class="modal-footer">
                 <button type="button" class="btn-iptal" onclick="modalKapat()">Cancel</button>
                 <button type="submit" class="btn-kaydet">Save</button>
@@ -346,44 +357,48 @@
     </div>
 </div>
 
+<!-- SİLME ONAY MODAL VE TEK SİLME FORMU -->
 <div id="silmeOnayModal" class="sil-modal-arka-plan">
     <div class="sil-modal-kutu">
         <div class="sil-modal-ikon"><i class="fa-solid fa-circle-exclamation"></i></div>
         <h2>Are you sure?</h2>
-        <p>Are you sure you want to delete this domain? This action cannot be undone.</p>
-        <div class="sil-modal-butonlar">
-            <button class="btn-sil-vazgec" onclick="silmeOnayiniKapat()">Cancel</button>
-            <button class="btn-sil-onay" id="kesinSilButonu">Yes, Delete</button>
-        </div>
+        <p>Are you sure you want to delete this server? This action cannot be undone.</p>
+        
+        <!-- Dinamik Silme Formu -->
+        <form id="tekSilmeFormu" action="" method="POST">
+            @csrf
+            @method('DELETE')
+            <div class="sil-modal-butonlar">
+                <button type="button" class="btn-sil-vazgec" onclick="silmeOnayiniKapat()">Cancel</button>
+                <button type="submit" class="btn-sil-onay">Yes, Delete</button>
+            </div>
+        </form>
     </div>
 </div>
 
 <script>
-    let silinecekDomainId = null;
-
     // --- SİLME MODAL FONKSİYONLARI ---
     function silmeOnayiniAc(id) {
-        silinecekDomainId = id;
+        // Silme formunun action adresini tıklanan sunucunun ID'sine göre ayarla
+        document.getElementById('tekSilmeFormu').action = '/servers/' + id;
         document.getElementById('silmeOnayModal').style.display = 'block';
     }
 
-    // Boşluğa veya dışarıya tıklandığında silme onay penceresini kapatmak için
     function silmeOnayiniKapat() {
         document.getElementById('silmeOnayModal').style.display = 'none';
     }
 
-    document.getElementById('kesinSilButonu').addEventListener('click', function() {
-        if (silinecekDomainId) {
-            document.getElementById('sil-formu-' + silinecekDomainId).submit();
-        }
-    });
-
     // --- EKLEME/DÜZENLEME MODAL FONKSİYONLARI ---
     function modalAc(){
-        document.getElementById("modalTitle").innerHTML = "Add New Domain";
-        document.getElementById("domainForm").action = "/domains";
+        document.getElementById("modalTitle").innerHTML = "Add New Server";
+        document.getElementById("serverForm").action = "/servers";
         document.getElementById("methodAlani").innerHTML = "";
-        document.getElementById("domainForm").reset();
+        document.getElementById("serverForm").reset();
+        
+        var passInput = document.getElementById("password");
+        passInput.required = true;
+        passInput.placeholder = "";
+
         document.querySelector(".btn-kaydet").innerHTML = "Save";
         document.getElementById("modal").style.display="block";
     }
@@ -393,17 +408,25 @@
     }
 
     function duzenle(id){
-        fetch('/domains/' + id + '/edit')
+        fetch('/servers/' + id + '/edit')
         .then(response => response.json())
-        .then(domain => {
+        .then(server => {
             document.getElementById("modal").style.display="block";
-            document.getElementById("modalTitle").innerHTML = "Edit Domain";
-            document.getElementById("domain_name").value = domain.domain_name;
-            document.getElementById("description").value = domain.description;
+            document.getElementById("modalTitle").innerHTML = "Edit Server";
+            document.getElementById("name").value = server.name;
+            document.getElementById("type").value = server.type;
+            document.getElementById("ip_address").value = server.ip;
+            document.getElementById("username").value = server.username;
+
+            var passInput = document.getElementById("password");
+            passInput.value = "";
+            passInput.required = false;
+            passInput.placeholder = "Değiştirmek istemiyorsanız boş bırakın";
+            
             document.querySelector(".btn-kaydet").innerHTML = "Update";
 
-            let form = document.getElementById("domainForm");
-            form.action = "/domains/" + id;
+            let form = document.getElementById("serverForm");
+            form.action = "/servers/" + id;
             document.getElementById("methodAlani").innerHTML = '<input type="hidden" name="_method" value="PUT" id="putMethod">';
         });
     }
@@ -415,10 +438,11 @@
         if (event.target == modal) modalKapat();
         if (event.target == silModal) silmeOnayiniKapat();
     }
+
     @if ($errors->any())
         window.onload = function () {
-        document.getElementById("modal").style.display = "block";
-    };
-@endif
+            document.getElementById("modal").style.display = "block";
+        };
+    @endif
 </script>
 @endsection

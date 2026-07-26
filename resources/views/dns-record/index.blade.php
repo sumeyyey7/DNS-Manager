@@ -209,6 +209,28 @@
         box-shadow: 0 0 0 3px rgba(37, 99, 235, .15);
     }
 
+    .ext-ip-kapsayici {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .btn-ip-toggle {
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        color: #334155;
+        padding: 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        white-space: nowrap;
+        transition: .2s;
+    }
+
+    .btn-ip-toggle:hover {
+        background: #e2e8f0;
+    }
+
     .modal-footer, .sil-modal-butonlar { 
         display: flex; 
         justify-content: flex-end; 
@@ -313,7 +335,6 @@
                 <th>Internal IP</th>
                 <th>External IP</th>
                 <th>TTL</th>
-                <!-- GERİ EKLENDİ: İşlem başlığı -->
                 <th style="text-align: right; padding-right: 15px;">Actions</th>
             </tr>
         </thead>
@@ -328,7 +349,6 @@
                 <td>{{ $record->external_ip ?? '-' }}</td>
                 <td>{{ $record->ttl }}</td>
                 <td>
-                    <!-- GERİ EKLENDİ: İşlem butonları ve gizli silme formu -->
                     <div class="islem-butonlari" style="padding-right: 15px;">
                         <i class="fa-regular fa-pen-to-square" title="Edit" onclick="kayitDuzenle({{ json_encode($record) }})"></i>
                         <i class="fa-regular fa-trash-can" title="Delete" onclick="silmeOnayiniAc({{ $record->id }})"></i>
@@ -401,9 +421,18 @@
                 <input type="text" name="internal_ip" id="form_internal_ip" value="{{ old('internal_ip') }}" placeholder="192.168.1.10" autocomplete="off">
             </div>
 
+            <!-- EXTERNAL IP ALANI (AÇILIR LİSTE VEYA MANUEL INPUT SEÇENEKLİ) -->
             <div class="form-grup">
                 <label>External IP</label>
-                <input type="text" name="external_ip" id="form_external_ip" value="{{ old('external_ip') }}" placeholder="85.105.10.25" autocomplete="off">
+                <div class="ext-ip-kapsayici">
+                    <select name="external_ip" id="form_external_ip_select">
+                        <option value="">Seçiniz</option>
+                    </select>
+
+                    <input type="text" name="external_ip" id="form_external_ip_input" placeholder="Örn: 203.0.113.195" style="display: none;" disabled autocomplete="off">
+
+                    <button type="button" class="btn-ip-toggle" id="btnIpToggle" onclick="toggleIpInputMode()">Özel IP Gir</button>
+                </div>
             </div>
 
             <div class="form-grup">
@@ -433,8 +462,38 @@
 
 <script>
     let silinecekKayitId = null;
+    let timer = null;
+    let isCustomIpMode = false;
+    const csrfToken = '{{ csrf_token() }}';
 
-    // --- EKLEME VE DÜZENLEME MODALI FONKSİYONLARI ---
+    function toggleIpInputMode(forceManual = null) {
+        const selectEl = document.getElementById('form_external_ip_select');
+        const inputEl = document.getElementById('form_external_ip_input');
+        const btnToggle = document.getElementById('btnIpToggle');
+
+        if (forceManual !== null) {
+            isCustomIpMode = forceManual;
+        } else {
+            isCustomIpMode = !isCustomIpMode;
+        }
+
+        if (isCustomIpMode) {
+            selectEl.style.display = 'none';
+            selectEl.disabled = true;
+
+            inputEl.style.display = 'block';
+            inputEl.disabled = false;
+            btnToggle.innerText = "Listeden Seç";
+        } else {
+            inputEl.style.display = 'none';
+            inputEl.disabled = true;
+
+            selectEl.style.display = 'block';
+            selectEl.disabled = false;
+            btnToggle.innerText = "Özel IP Gir";
+        }
+    }
+
     function modalAc() {
         document.getElementById('modalBaslik').innerText = "Add New Record";
         document.getElementById('dnsForm').action = "/dns-records";
@@ -442,6 +501,9 @@
         document.getElementById('dnsForm').reset();
         document.getElementById('form_ttl').value = "3600";
         document.getElementById('btnSubmit').innerHTML = "Save";
+        
+        toggleIpInputMode(false);
+        document.getElementById('form_external_ip_select').innerHTML = '<option value="">Seçiniz</option>';
         document.getElementById('dnsModal').style.display = 'block';
         updateForm();
     }
@@ -455,18 +517,26 @@
         document.getElementById('form_host').value = record.host;
         document.getElementById('form_value').value = record.value;
         document.getElementById('form_internal_ip').value = record.internal_ip ?? "";
-        document.getElementById('form_external_ip').value = record.external_ip ?? "";
         document.getElementById('form_ttl').value = record.ttl;
+        
         document.getElementById('btnSubmit').innerHTML = "Update";
         document.getElementById('dnsModal').style.display = 'block';
         updateForm();
+
+        toggleIpInputMode(false);
+
+        if (record.internal_ip) {
+            fetchNatExternalIp(record.internal_ip, record.external_ip);
+        } else if (record.external_ip) {
+            const extSelect = document.getElementById('form_external_ip_select');
+            extSelect.innerHTML = `<option value="">Seçiniz</option><option value="${record.external_ip}" selected>${record.external_ip}</option>`;
+        }
     }
 
     function modalKapat() {
         document.getElementById('dnsModal').style.display = 'none';
     }
 
-    // --- SİLME MODALI FONKSİYONLARI ---
     function silmeOnayiniAc(id) {
         silinecekKayitId = id;
         document.getElementById('silmeOnayModal').style.display = 'block';
@@ -482,7 +552,6 @@
         }
     });
 
-    // Dış boşluğa tıklanınca modalları kapatma güvenliği
     window.onclick = function(event) {
         var dnsModal = document.getElementById('dnsModal');
         var silModal = document.getElementById('silmeOnayModal');
@@ -500,7 +569,6 @@
     const valueInput = document.getElementById('form_value');
     const hostInput = document.getElementById('form_host');
     const internalIpInput = document.getElementById('form_internal_ip');
-    const externalIpInput = document.getElementById('form_external_ip');
     const valueGroup = document.getElementById('valueGroup');
     typeSelect.addEventListener('change', updateForm);
 
@@ -517,78 +585,123 @@
                 valueInput.placeholder = "";
                 hostInput.placeholder = "www";
                 internalIpInput.placeholder = "192.168.1.10";
-                externalIpInput.placeholder = "85.105.10.25";
                 break;
-
             case 'AAAA':
                 valueInput.placeholder = "";
                 hostInput.placeholder = "www";
                 internalIpInput.placeholder = "2001:db8::10";
-                externalIpInput.placeholder = "2001:db8::25";
                 break;
-
             case 'CNAME':
                 valueInput.placeholder = "server.example.com";
                 hostInput.placeholder = "www";
                 internalIpInput.placeholder = "-";
-                externalIpInput.placeholder = "-";
                 break;
-
             case 'MX':
                 valueInput.placeholder = "mail.example.com";
                 hostInput.placeholder = "@";
                 internalIpInput.placeholder = "-";
-                externalIpInput.placeholder = "-";
                 break;
-
             case 'NS':
                 valueInput.placeholder = "ns1.example.com";
                 hostInput.placeholder = "@";
                 internalIpInput.placeholder = "192.168.1.2";
-                externalIpInput.placeholder = "85.105.10.2";
                 break;
-
             case 'TXT':
                 valueInput.placeholder = "v=spf1 ~all";
                 hostInput.placeholder = "@";
                 internalIpInput.placeholder = "-";
-                externalIpInput.placeholder = "-";
                 break;
-
             default:
                 valueInput.placeholder = "";
                 hostInput.placeholder = "";
                 internalIpInput.placeholder = "";
-                externalIpInput.placeholder = "";
         }
     }
 
     updateForm();
 
-    internalIpInput.addEventListener("blur", function () {
-        if (typeSelect.value !== "A" && typeSelect.value !== "AAAA") {
+    internalIpInput.addEventListener('blur', function() {
+        if (isCustomIpMode) return;
+        const internalIp = this.value.trim();
+        if (internalIp === "") {
+            document.getElementById("form_external_ip_select").innerHTML = '<option value="">Seçiniz</option>';
             return;
         }
+        fetchNatExternalIp(internalIp);
+    });
+
+    internalIpInput.addEventListener('input', function() {
+        if (isCustomIpMode) return;
+        clearTimeout(timer);
+        const internalIp = this.value.trim();
+
+        if (internalIp === "") {
+            document.getElementById("form_external_ip_select").innerHTML = '<option value="">Seçiniz</option>';
+            return;
+        }
+
+        if (internalIp.length < 7) return;
+
+        timer = setTimeout(() => {
+            fetchNatExternalIp(internalIp);
+        }, 600);
+    });
+
+    function fetchNatExternalIp(internalIp, currentSelectedIp = null) {
+        const selectElement = document.getElementById("form_external_ip_select");
 
         fetch("/nat-search", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "X-CSRF-TOKEN": document
-                    .querySelector('meta[name="csrf-token"]')
-                    .getAttribute("content")
+                "X-CSRF-TOKEN": csrfToken
             },
             body: JSON.stringify({
-                internal_ip: internalIpInput.value
+                internal_ip: internalIp
             })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) throw new Error("HTTP Hata: " + response.status);
+            return response.json();
+        })
         .then(data => {
-            if (data.external_ip !== "") {
-                externalIpInput.value = data.external_ip;
+            selectElement.innerHTML = '<option value="">Seçiniz</option>';
+
+            let ips = [];
+
+            if (typeof data === 'string' && data !== '') {
+                ips.push(data);
+            } else if (Array.isArray(data)) {
+                ips = data;
+            } else if (data && typeof data === 'object') {
+                if (data.external_ip) ips = Array.isArray(data.external_ip) ? data.external_ip : [data.external_ip];
+                else if (data.externalIp) ips = Array.isArray(data.externalIp) ? data.externalIp : [data.externalIp];
+                else if (data.ip) ips = Array.isArray(data.ip) ? data.ip : [data.ip];
+                else if (data.data) ips = Array.isArray(data.data) ? data.data : [data.data];
             }
+
+            ips = ips.filter(ip => ip && ip.toString().trim() !== "");
+
+            if (ips.length > 0) {
+                ips.forEach(ip => {
+                    const option = document.createElement("option");
+                    option.value = ip;
+                    option.textContent = ip;
+                    
+                    if (currentSelectedIp && currentSelectedIp === ip) {
+                        option.selected = true;
+                    }
+                    selectElement.appendChild(option);
+                });
+            } else {
+                selectElement.innerHTML = '<option value="">Seçiniz</option><option value="" disabled>Dış IP bulunamadı</option>';
+            }
+        })
+        .catch(err => {
+            console.error("NAT IP sorgusunda hata:", err);
+            selectElement.innerHTML = '<option value="">Seçiniz</option>';
         });
-    });
+    }
 </script>
 
 @endsection

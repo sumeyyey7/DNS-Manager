@@ -257,7 +257,7 @@
                 <li><a href="/domains"><i class="fa-solid fa-globe"></i> Domains</a></li>
                 <li><a href="/dns-records"><i class="fa-solid fa-database"></i> DNS Records</a></li>
                 <li><a href="/logs"><i class="fa-solid fa-file-lines"></i> Logs</a></li>
-                <li><a href="#"><i class="fa-solid fa-gear"></i> Settings</a></li>
+                <li><a href="/servers"><i class="fa-solid fa-gear"></i> Server</a></li>
             </ul>
         </div>
 

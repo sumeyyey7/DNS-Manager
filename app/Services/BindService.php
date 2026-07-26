@@ -3,31 +3,61 @@
 namespace App\Services;
 
 use App\Models\Domain;
-use App\Services\ExternalBindService;
 
 class BindService
 {
     public function updateNamedConf()
     {
-        $domains = Domain::all();
-
+        $domains = Domain::with('dnsRecords')->get();
         $content = "";
+        $addedReverseZones = [];
 
         foreach ($domains as $domain) {
-
+            // Forward zone
             $content .= 'zone "' . $domain->domain_name . "\" {\n";
             $content .= "    type master;\n";
             $content .= '    file "/etc/bind/zones/' . $domain->domain_name . ".db\";\n";
             $content .= "};\n\n";
+
+            // Reverse zone (Öncelik Dış IP'de)
+            foreach ($domain->dnsRecords as $record) {
+                $externalIp = trim($record->external_ip ?? '');
+                $internalIp = trim($record->internal_ip ?? '');
+
+                // Öncelik external_ip, yoksa internal_ip
+                $ip = filter_var($externalIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) 
+                    ? $externalIp 
+                    : (filter_var($internalIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) ? $internalIp : null);
+
+                if (strtoupper($record->type) === 'A' && $ip) {
+                    $parts = explode('.', $ip);
+
+                    if (count($parts) === 4) {
+                        $reverseZone = "{$parts[2]}.{$parts[1]}.{$parts[0]}.in-addr.arpa";
+
+                        if (!in_array($reverseZone, $addedReverseZones)) {
+                            $addedReverseZones[] = $reverseZone;
+
+                            $content .= 'zone "' . $reverseZone . "\" {\n";
+                            $content .= "    type master;\n";
+                            $content .= '    file "/etc/bind/zones/' . $reverseZone . ".db\";\n";
+                            $content .= "};\n\n";
+                        }
+                    }
+                }
+            }
         }
 
         file_put_contents('/etc/bind/zones.conf', $content);
+
+        // Yerel tarafta zones.conf dosyasının named.conf.local içine eklendiğinden emin olunur
+        exec('grep -q \'include "/etc/bind/zones.conf";\' /etc/bind/named.conf.local || echo \'include "/etc/bind/zones.conf";\' | sudo tee -a /etc/bind/named.conf.local');
     }
 
     public function generateZoneFiles()
     {
-        // Önce eski zone dosyalarını sil
-        $files = glob('/etc/bind/zones/*.db');
+        // Eski tüm zone dosyalarını temizle
+        $files = glob('/etc/bind/zones/*');
 
         foreach ($files as $file) {
             if (is_file($file)) {
@@ -35,13 +65,14 @@ class BindService
             }
         }
 
-        // Güncel domainleri al
+        // Domainleri al
         $domains = Domain::with('dnsRecords')->get();
+        $serial = date('Ymd') . '01';
+
+        // Tüm reverse kayıtları burada toplanacak
+        $reverseZones = [];
 
         foreach ($domains as $domain) {
-
-            $serial = date('Ymd') . '01';
-
             $content = '$TTL 604800' . PHP_EOL . PHP_EOL;
 
             $content .= "@ IN SOA ns1.{$domain->domain_name}. admin.{$domain->domain_name}. (" . PHP_EOL;
@@ -53,28 +84,91 @@ class BindService
 
             $content .= "@ IN NS ns1.{$domain->domain_name}." . PHP_EOL;
             $content .= "ns1 IN A 127.0.0.1" . PHP_EOL;
-            
-            
+
             foreach ($domain->dnsRecords as $record) {
-            
-            $value = $record->value;
+                $value = $record->value;
 
-            if ($record->type === 'A' && !empty($record->internal_ip)) {
-                $value = $record->internal_ip;
+                if (strtoupper($record->type) === 'A') {
+                    $externalIp = trim($record->external_ip ?? '');
+                    $internalIp = trim($record->internal_ip ?? '');
+
+                    // Forward zone için External IP kullan (Yoksa internal IP'ye geç)
+                    if (filter_var($externalIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                        $value = $externalIp;
+                    } elseif (filter_var($internalIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                        $value = $internalIp;
+                    }
+
+                    // Reverse zone için IP belirle (ÖNCELİK EXTERNAL IP)
+                    $targetIp = filter_var($internalIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)
+    ? $internalIp
+    : null;
+    
+                    if ($targetIp) {
+                        $parts = explode('.', $targetIp);
+                        if (count($parts) === 4) {
+                            $zoneName = "{$parts[2]}.{$parts[1]}.{$parts[0]}.in-addr.arpa";
+                            $ptrHost = $parts[3];
+                            
+                            $recordHost = ($record->host === '@') ? '' : ".{$record->host}";
+                            $fqdn = "{$domain->domain_name}{$recordHost}.";
+
+                            $reverseZones[$zoneName][] = [
+                                'host' => $ptrHost,
+                                'domain' => $fqdn
+                            ];
+                        }
+                    }
+                }
+
+                $content .= sprintf(
+                    "%-15s IN %-6s %s\n",
+                    $record->host,
+                    $record->type,
+                    $value
+                );
             }
-            
-            $content .= sprintf(
-            "%-15s IN %-6s %s\n",
-            $record->host,
-            $record->type,
-            $value
-            );
 
-            }
-
+            // Forward zone dosyasını yaz
             file_put_contents(
                 "/etc/bind/zones/{$domain->domain_name}.db",
                 $content
+            );
+        }
+
+        // Reverse zone dosyalarını oluştur
+        foreach ($reverseZones as $zoneName => $records) {
+            $firstDomain = rtrim($records[0]['domain'], '.');
+            $parts = explode('.', $firstDomain);
+
+            if (count($parts) >= 2) {
+                $baseDomain = implode('.', array_slice($parts, -2));
+            } else {
+                $baseDomain = $firstDomain;
+            }
+
+            $reverseContent = '$TTL 604800' . PHP_EOL . PHP_EOL;
+
+            $reverseContent .= "@ IN SOA ns1.{$baseDomain}. admin.{$baseDomain}. (" . PHP_EOL;
+            $reverseContent .= "    {$serial}" . PHP_EOL;
+            $reverseContent .= "    604800" . PHP_EOL;
+            $reverseContent .= "    86400" . PHP_EOL;
+            $reverseContent .= "    2419200" . PHP_EOL;
+            $reverseContent .= "    604800 )" . PHP_EOL . PHP_EOL;
+
+            $reverseContent .= "@ IN NS ns1.{$baseDomain}." . PHP_EOL . PHP_EOL;
+
+            foreach ($records as $ptr) {
+                $reverseContent .= sprintf(
+                    "%-10s IN PTR %s\n",
+                    $ptr['host'],
+                    $ptr['domain']
+                );
+            }
+
+            file_put_contents(
+                "/etc/bind/zones/{$zoneName}.db",
+                $reverseContent
             );
         }
     }
@@ -101,14 +195,14 @@ class BindService
 
     public function checkAllZones()
     {
-        $domains = Domain::all();
+        $zoneFiles = glob('/etc/bind/zones/*.db');
 
-        foreach ($domains as $domain) {
-
+        foreach ($zoneFiles as $file) {
+            $zoneName = basename($file, '.db');
             $output = [];
 
             exec(
-                "sudo named-checkzone {$domain->domain_name} /etc/bind/zones/{$domain->domain_name}.db 2>&1",
+                "sudo named-checkzone {$zoneName} {$file} 2>&1",
                 $output,
                 $result
             );
@@ -128,61 +222,93 @@ class BindService
     }
 
     public function applyChanges()
-{
-    $this->updateNamedConf();
+    {
+        // Yerel BIND yapılandırmasını oluştur
+        $this->updateNamedConf();
 
-    $this->generateZoneFiles();
+        // Zone dosyalarını oluştur
+        $this->generateZoneFiles();
 
-    $conf = $this->checkNamedConf();
+        // named.conf kontrolü
+        $conf = $this->checkNamedConf();
 
-    if (!$conf['success']) {
-        return $conf;
-    }
+        if (!$conf['success']) {
+            return $conf;
+        }
 
-    $zones = $this->checkAllZones();
+        // Zone dosyalarını doğrula
+        $zones = $this->checkAllZones();
 
-    if (!$zones['success']) {
-        return $zones;
-    }
+        if (!$zones['success']) {
+            return $zones;
+        }
 
-    $local = $this->reloadBind();
+        // Yerel BIND'i yeniden yükle
+        $local = $this->reloadBind();
 
-    if (!$local['success']) {
-        return $local;
-    }
+        if (!$local['success']) {
+            return $local;
+        }
 
-    $external = new ExternalBindService();
+        // External sunucular
+        $external = new \App\Services\ExternalBindService();
 
-    $upload = $external->uploadZoneFiles();
+        /*
+        |--------------------------------------------------------------------------
+        | Dosyaları tüm external sunuculara gönder
+        |--------------------------------------------------------------------------
+        */
+        $uploadResults = $external->uploadZoneFiles();
 
-    if (!$upload['success']) {
+        foreach ($uploadResults as $upload) {
+            if (isset($upload['result']) && !$upload['result']['success']) {
+                return [
+                    'success' => false,
+                    'message' => "Dosya aktarımı başarısız.\nSunucu: {$upload['server']}\n{$upload['result']['message']}"
+                ];
+            } elseif (isset($upload['success']) && !$upload['success']) {
+                return [
+                    'success' => false,
+                    'message' => "Dosya aktarımı başarısız.\nSunucu: {$upload['server']}\n{$upload['message']}"
+                ];
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Tüm external sunucularda named-checkconf
+        |--------------------------------------------------------------------------
+        */
+        $checkResults = $external->checkNamedConf();
+
+        foreach ($checkResults as $check) {
+            if (!$check['result']['success']) {
+                return [
+                    'success' => false,
+                    'message' => "named-checkconf başarısız.\nSunucu: {$check['server']}\n{$check['result']['message']}"
+                ];
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Tüm external sunucularda rndc reload
+        |--------------------------------------------------------------------------
+        */
+        $reloadResults = $external->reloadBind();
+
+        foreach ($reloadResults as $reload) {
+            if (!$reload['result']['success']) {
+                return [
+                    'success' => false,
+                    'message' => "rndc reload başarısız.\nSunucu: {$reload['server']}\n{$reload['result']['message']}"
+                ];
+            }
+        }
+
         return [
-            'success' => false,
-            'message' => 'VM dosya aktarımı başarısız.' . PHP_EOL . $upload['message']
+            'success' => true,
+            'message' => 'Yerel DNS ve tüm external DNS sunucuları başarıyla güncellendi.'
         ];
     }
-
-    $check = $external->checkNamedConf();
-
-    if (!$check['success']) {
-        return [
-            'success' => false,
-            'message' => 'VM named-checkconf hatası.' . PHP_EOL . $check['message']
-        ];
-    }
-
-    $reload = $external->reloadBind();
-
-    if (!$reload['success']) {
-        return [
-            'success' => false,
-            'message' => 'VM rndc reload hatası.' . PHP_EOL . $reload['message']
-        ];
-    }
-
-    return [
-        'success' => true,
-        'message' => 'Yerel ve harici DNS sunucuları başarıyla güncellendi.'
-    ];
-}
 }
