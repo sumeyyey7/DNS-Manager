@@ -145,21 +145,20 @@
         <div class="form-grup">
             <label>Email Address</label>
             <input
-                type="email"
-                name="email"
-                placeholder="email@example.com"
-                required
-                autocomplete="email"
-                autofocus
-            >
-        </div>
+        type="email"
+        name="email"
+        placeholder=""
+        autocomplete="off"
+        autofocus
+    >
+</div>
 
         <div class="form-grup">
             <label>Password</label>
             <input
                 type="password"
                 name="password"
-                placeholder="••••••••"
+                placeholder=""
                 required
                 autocomplete="current-password"
             >

@@ -20,7 +20,7 @@ class Dnsmanage extends Controller
         ]);
 
         $mailbox = "{ogrencimail.ibu.edu.tr:993/imap/ssl}INBOX";
-        // $mailbox = "{imap.atauni.edu.tr:993/imap/ssl}INBOX";
+        
         
         $imap = @imap_open(
         $mailbox,

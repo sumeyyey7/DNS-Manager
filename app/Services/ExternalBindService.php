@@ -7,85 +7,82 @@ use Illuminate\Database\Eloquent\Collection;
 
 class ExternalBindService
 {
-
     private Collection $servers;
 
-public function __construct()
-{
-    $this->servers = Server::where('type', 'external')->get();
+    public function __construct()
+    {
+        $this->servers = Server::where('type', 'external')->get();
 
-    if ($this->servers->isEmpty()) {
-        throw new \Exception('No external servers found.');
+        if ($this->servers->isEmpty()) {
+            throw new \Exception('No external servers found.');
+        }
     }
-}
 
-    /**
-     * VM üzerinde komut çalıştırır.
-     */
+    
     private function run(Server $server, string $command): array
-{
-    $output = [];
-    $result = 0;
+    {
+        $output = [];
+        $result = 0;
 
-    $cmd =
-        "sshpass -p '{$server->password}' " .
-        "ssh -o StrictHostKeyChecking=no {$server->username}@{$server->ip} " .
-        escapeshellarg($command) .
-        " 2>&1";
+        $cmd =
+            "sshpass -p '{$server->password}' " .
+            "ssh -o ConnectTimeout=3 -o ConnectionAttempts=1 -o StrictHostKeyChecking=no {$server->username}@{$server->ip} " .
+            escapeshellarg($command) .
+            " 2>&1";
 
-    exec($cmd, $output, $result);
+        exec($cmd, $output, $result);
 
-    return [
-        'success' => $result === 0,
-        'code'    => $result,
-        'message' => implode("\n", $output),
-        'command' => $cmd,
-    ];
-}
+        return [
+            'success' => $result === 0,
+            'code'    => $result,
+            'message' => implode("\n", $output),
+            'command' => $cmd,
+        ];
+    }
 
     public function testConnection(): array
-{
-    $results = [];
+    {
+        $results = [];
 
-    foreach ($this->servers as $server) {
-        $results[] = [
-            'server' => $server->name,
-            'result' => $this->run($server, 'hostname')
-        ];
+        foreach ($this->servers as $server) {
+            $results[] = [
+                'server' => $server->name,
+                'result' => $this->run($server, 'hostname')
+            ];
+        }
+
+        return $results;
     }
-
-    return $results;
-}
 
     public function reloadBind(): array
-{
-    $results = [];
+    {
+        $results = [];
 
-    foreach ($this->servers as $server) {
-        $results[] = [
-            'server' => $server->name,
-            'result' => $this->run($server, 'sudo rndc reload')
-        ];
+        foreach ($this->servers as $server) {
+            $results[] = [
+                'server' => $server->name,
+                'result' => $this->run($server, 'sudo rndc reload')
+            ];
+        }
+
+        return $results;
     }
-
-    return $results;
-}
 
     public function checkNamedConf(): array
-{
-    $results = [];
+    {
+        $results = [];
 
-    foreach ($this->servers as $server) {
-        $results[] = [
-            'server' => $server->name,
-            'result' => $this->run($server, 'sudo named-checkconf')
-        ];
+        foreach ($this->servers as $server) {
+            $results[] = [
+                'server' => $server->name,
+                'result' => $this->run($server, 'sudo named-checkconf')
+            ];
+        }
+
+        return $results;
     }
 
-    return $results;
-}
-
-    public function uploadZoneFiles()
+    public function uploadZoneFiles(): array
     {
         $sourcePath = "/etc/bind/zones";
         $tempPath = storage_path("app/upload-zones");
@@ -94,14 +91,13 @@ public function __construct()
             mkdir($tempPath, 0777, true);
         }
 
-        // Yerel geçici klasörü temizle
         foreach (glob($tempPath . "/*") as $file) {
             if (is_file($file)) {
                 unlink($file);
             }
         }
 
-        // Zone dosyalarını kopyala
+        
         foreach (glob($sourcePath . "/*") as $file) {
             if (is_file($file)) {
                 copy($file, $tempPath . "/" . basename($file));
@@ -114,60 +110,57 @@ public function __construct()
 
         $results = [];
 
-foreach ($this->servers as $server) {
+        foreach ($this->servers as $server) {
+         
+            $this->run($server, "rm -rf /tmp/bind_upload && mkdir -p /tmp/bind_upload");
 
-    $this->run($server, "rm -rf /tmp/bind_upload && mkdir -p /tmp/bind_upload");
-
-    $output = [];
-    $result = 0;
-
-    $cmd =
-        "sshpass -p '{$server->password}' scp -o StrictHostKeyChecking=no -r " .
-        $tempPath . "/* " .
-        "{$server->username}@{$server->ip}:/tmp/bind_upload/ 2>&1";
-
-    exec($cmd, $output, $result);
-
-    if ($result !== 0) {
-
-        $results[] = [
-            'server' => $server->name,
-            'success' => false,
-            'message' => implode("\n", $output)
-        ];
-
-        continue;
-    }
-
-    $results[] = [
-        'server' => $server->name,
-        'result' => $this->run($server, "
-            sudo mkdir -p /etc/bind/zones &&
-            sudo rm -f /etc/bind/zones/* &&
-            sudo cp /tmp/bind_upload/*.db /etc/bind/zones/ 2>/dev/null;
-            sudo cp /tmp/bind_upload/zones.conf /etc/bind/zones.conf 2>/dev/null;
-            sudo grep -q 'include \"/etc/bind/zones.conf\";' /etc/bind/named.conf.local || echo 'include \"/etc/bind/zones.conf\";' | sudo tee -a /etc/bind/named.conf.local;
-            sudo chown -R bind:bind /etc/bind/zones /etc/bind/zones.conf /etc/bind/named.conf.local;
-            sudo chmod 644 /etc/bind/zones/* /etc/bind/zones.conf
-        ")
-    ];
-}
-
-return $results;
+            $output = [];
+            $result = 0;
 
         
+            $cmd =
+                "sshpass -p '{$server->password}' scp -o StrictHostKeyChecking=no -r " .
+                $tempPath . "/* " .
+                "{$server->username}@{$server->ip}:/tmp/bind_upload/ 2>&1";
+
+            exec($cmd, $output, $result);
+
+            if ($result !== 0) {
+                $results[] = [
+                    'server' => $server->name,
+                    'success' => false,
+                    'message' => implode("\n", $output)
+                ];
+                continue;
+            }
+
+           
+            $results[] = [
+                'server' => $server->name,
+                'result' => $this->run($server, "
+                    sudo mkdir -p /etc/bind/zones &&
+                    sudo rm -f /etc/bind/zones/* &&
+                    sudo cp /tmp/bind_upload/*.db /etc/bind/zones/ 2>/dev/null || true;
+                    sudo cp /tmp/bind_upload/zones.conf /etc/bind/zones.conf 2>/dev/null || true;
+                    sudo grep -q 'include \"/etc/bind/zones.conf\";' /etc/bind/named.conf.local || echo 'include \"/etc/bind/zones.conf\";' | sudo tee -a /etc/bind/named.conf.local;
+                    sudo chown -R bind:bind /etc/bind/zones /etc/bind/zones.conf /etc/bind/named.conf.local;
+                    sudo chmod 644 /etc/bind/zones/* /etc/bind/zones.conf 2>/dev/null || true;
+                ")
+            ];
+        }
+
+        return $results;
     }
+
     public function getServerStatus(): array
-{
-    $statuses = [];
+    {
+        $statuses = [];
 
-    foreach ($this->servers as $server) {
+        foreach ($this->servers as $server) {
+            $result = $this->run($server, "hostname");
+            $statuses[$server->id] = $result['success'];
+        }
 
-        $result = $this->run($server, "hostname");
-
-        $statuses[$server->id] = $result['success'];
+        return $statuses;
     }
-
-    return $statuses;
-}
 }

@@ -75,6 +75,10 @@
     font-weight:500;
 }
 
+.server-link:hover{
+    text-decoration:underline;
+}
+
 .islem-butonlari{
     display:flex;
     justify-content:flex-end;
@@ -88,9 +92,6 @@
     transition:.2s;
 }
 
-.islem-butonlari i:hover{
-    background:#f1f5f9;
-}
 .islem-butonlari .fa-pen-to-square:hover { color: #2563eb; background-color: #eff6ff; }
 .islem-butonlari .fa-trash-can:hover { color: #dc2626; background-color: #fef2f2; }
 
@@ -297,7 +298,7 @@
                 <td>{{ $server->id }}</td>
                 <td><a href="/servers/{{ $server->id }}" class="server-link">{{ $server->name }}</a></td>
                 <td>@if($server->type == 'internal')Internal @else External @endif</td>
-                <td style="font-weight: 500;">{{ $server->ip}}</td>
+                <td style="font-weight: 500;">{{ $server->ip }}</td>
                 <td>{{ $server->username }}</td>
                 <td>
                     @if($server->type == 'internal')
@@ -325,13 +326,12 @@
     <div class="modal-icerik">
         <h2 id="modalTitle">Add New Server</h2>
         
-        <!-- novalidate tarayıcının varsayılan balon uyarısını kapatır -->
         <form id="serverForm" action="/servers" method="POST" autocomplete="off" novalidate>
             @csrf
             <div id="methodAlani"></div>
 
             <label>Server Name</label>
-            <input id="name" type="text" name="name"  required>
+            <input id="name" type="text" name="name" required>
 
             <label>Server Type</label>
             <select id="type" name="type" required>
@@ -343,8 +343,7 @@
             <input id="ip_address" type="text" name="ip_address" placeholder="192.168.56.101" spellcheck="false" autocorrect="off" autocapitalize="off" required>
 
             <label>SSH Username</label>
-            <!-- autocomplete="off" ve role="presentation" eklenerek Parolayı Yönet uyarısı engellendi -->
-           <input id="username" type="text" name="username" autocomplete="new-password" spellcheck="false" autocorrect="off" autocapitalize="off" required>
+            <input id="username" type="text" name="username" autocomplete="new-password" spellcheck="false" autocorrect="off" autocapitalize="off" required>
 
             <label>SSH Password</label>
             <input id="password" type="password" name="password" autocomplete="new-password">
@@ -364,7 +363,6 @@
         <h2>Are you sure?</h2>
         <p>Are you sure you want to delete this server? This action cannot be undone.</p>
         
-        <!-- Dinamik Silme Formu -->
         <form id="tekSilmeFormu" action="" method="POST">
             @csrf
             @method('DELETE')
@@ -379,7 +377,6 @@
 <script>
     // --- SİLME MODAL FONKSİYONLARI ---
     function silmeOnayiniAc(id) {
-        // Silme formunun action adresini tıklanan sunucunun ID'sine göre ayarla
         document.getElementById('tekSilmeFormu').action = '/servers/' + id;
         document.getElementById('silmeOnayModal').style.display = 'block';
     }
@@ -408,10 +405,17 @@
     }
 
     function duzenle(id){
-        fetch('/servers/' + id + '/edit')
-        .then(response => response.json())
+        // Bekleme durumunu engellemek için 4 saniyelik zaman aşımı (Timeout) eklendi
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+        fetch('/servers/' + id + '/edit', { signal: controller.signal })
+        .then(response => {
+            clearTimeout(timeoutId);
+            if (!response.ok) throw new Error("Sunucu yanıt vermedi");
+            return response.json();
+        })
         .then(server => {
-            document.getElementById("modal").style.display="block";
             document.getElementById("modalTitle").innerHTML = "Edit Server";
             document.getElementById("name").value = server.name;
             document.getElementById("type").value = server.type;
@@ -428,10 +432,16 @@
             let form = document.getElementById("serverForm");
             form.action = "/servers/" + id;
             document.getElementById("methodAlani").innerHTML = '<input type="hidden" name="_method" value="PUT" id="putMethod">';
+            document.getElementById("modal").style.display="block";
+        })
+        .catch(error => {
+            clearTimeout(timeoutId);
+            console.error("Düzenleme verisi alınamadı:", error);
+            alert("Sunucu yanıt vermedi veya bağlantı zaman aşımına uğradı!");
         });
     }
 
-    // Boşluğa tıklayınca modalları kapatma güvenliği
+    // Dış alana tıklayınca modalları kapatma
     window.onclick = function(event) {
         var modal = document.getElementById('modal');
         var silModal = document.getElementById('silmeOnayModal');

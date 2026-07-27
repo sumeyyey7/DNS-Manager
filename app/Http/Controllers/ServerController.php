@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Server;
 use App\Services\ExternalBindService;
+use Illuminate\Support\Facades\Log;
 
 class ServerController extends Controller
 {
@@ -15,9 +16,14 @@ class ServerController extends Controller
 
         try {
             $external = new ExternalBindService();
+            // Eğer servis yanıt vermezse sayfayı kilitletmemek için try-catch
             $statuses = $external->getServerStatus();
         } catch (\Exception $e) {
-            // External sunucu yoksa boş bırak
+            // Sunucuya erişilemezse veya zaman aşımına uğrarsa hata fırlatmak yerine 
+            // log tutup sayfayı hızlıca yükle
+            Log::error('ExternalBindService bağlantı hatası: ' . $e->getMessage());
+// veya
+logger()->error('ExternalBindService bağlantı hatası: ' . $e->getMessage());
         }
 
         return view('servers', compact('servers', 'statuses'));
@@ -30,35 +36,33 @@ class ServerController extends Controller
             'type'       => 'required|in:internal,external',
             'ip_address' => 'required|ip',
             'username'   => 'required|string|max:255',
-            'password'   => 'nullable|string', // Zorunluluğu esnettik
+            'password'   => 'nullable|string',
         ]);
 
         if ($request->type === 'internal' && empty($request->password)) {
-    $request->merge([
-        'password' => '',
-        'username' => $request->username ?: 'local'
-    ]);
-}
+            $request->merge([
+                'password' => '',
+                'username' => $request->username ?: 'local'
+            ]);
+        }
 
         Server::create([
-            'name'       => $request->name,
-            'type'       => $request->type,
-            'ip' => $request->ip_address, // Veritabanı sütun adına dikkat (ip vs ip_address)
-            'username'   => $request->username,
-            'password'   => $request->password,
+            'name'     => $request->name,
+            'type'     => $request->type,
+            'ip'       => $request->ip_address,
+            'username' => $request->username,
+            'password' => $request->password,
         ]);
 
         return redirect('/servers')->with('success', 'Server başarıyla eklendi.');
     }
 
-    // Modal düzenleme (Edit) açıldığında JavaScript'e verileri döndüren metot
     public function edit($id)
     {
         $server = Server::findOrFail($id);
         return response()->json($server);
     }
 
-    // Güncelleme isteğini karşılayan metot (Eksik olan kısım buydu)
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -66,19 +70,18 @@ class ServerController extends Controller
             'type'       => 'required|in:internal,external',
             'ip_address' => 'required|ip',
             'username'   => 'required|string|max:255',
-            'password'   => 'nullable|string', // Güncellerken şifre girmek opsiyonel
+            'password'   => 'nullable|string',
         ]);
 
         $server = Server::findOrFail($id);
 
         $data = [
-            'name'       => $request->name,
-            'type'       => $request->type,
-            'ip' => $request->ip_address,
-            'username'   => $request->username,
+            'name'     => $request->name,
+            'type'     => $request->type,
+            'ip'       => $request->ip_address,
+            'username' => $request->username,
         ];
 
-        // Eğer kullanıcı yeni bir şifre girdiyse güncelle, girmediyse eski şifreyi koru
         if ($request->filled('password')) {
             $data['password'] = $request->password;
         }
