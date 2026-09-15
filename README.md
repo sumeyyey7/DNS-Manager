@@ -108,14 +108,6 @@ Projeyi başlatın.
 php artisan serve
 ```
 
-## Kullanılan BIND Komutları
-
-```bash
-named-checkconf
-named-checkzone
-rndc reload
-```
-
 
 ## Geliştirici
 
